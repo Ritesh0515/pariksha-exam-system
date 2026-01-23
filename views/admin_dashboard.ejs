@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/head') %>
+    <title>Dashboard | Pariksha Admin</title>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <%- include('partials/sidebar', {currentPage: 'dashboard'}) %>
+
+        <div class="col-md-10 offset-md-2 p-5">
+            <div class="d-flex justify-content-between align-items-center mb-5">
+                <div>
+                    <h2 class="fw-bold mb-0">Welcome, <%= user.first_name %>!</h2>
+                    <p class="text-muted">Here is what's happening with your exams today.</p>
+                </div>
+                <div class="dropdown">
+                    <button class="btn bg-white shadow-sm rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle me-2 text-primary"></i> <%= user.role.toUpperCase() %>
+                    </button>
+                    <ul class="dropdown-menu border-0 shadow">
+                        <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="row mb-5">
+                <div class="col-md-3">
+                    <div class="card glass-card p-4 border-start border-4 border-primary">
+                        <div class="text-muted small fw-bold text-uppercase">Total Exams</div>
+                        <h2 class="fw-bold mt-2"><%= stats.exams %></h2>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card glass-card p-4 border-start border-4 border-success">
+                        <div class="text-muted small fw-bold text-uppercase">Students Enrolled</div>
+                        <h2 class="fw-bold mt-2"><%= stats.students %></h2>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card glass-card p-4 border-start border-4 border-warning">
+                        <div class="text-muted small fw-bold text-uppercase">Total Subjects</div>
+                        <h2 class="fw-bold mt-2"><%= stats.subjects %></h2>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card glass-card p-4 border-start border-4 border-danger">
+                        <div class="text-muted small fw-bold text-uppercase">Avg. Score</div>
+                        <h2 class="fw-bold mt-2">N/A</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card glass-card p-4 h-100">
+                        <h5 class="fw-bold mb-4">Recent Activity (New Subjects)</h5>
+                        <ul class="list-group list-group-flush">
+                            <% if (activities.length > 0) { %>
+                                <% activities.forEach(act => { %>
+                                    <li class="list-group-item px-0 py-3 bg-transparent">
+                                        <i class="bi bi-plus-circle text-primary me-3"></i> 
+                                        New Subject Added: <strong><%= act.subject_name %></strong>
+                                    </li>
+                                <% }) %>
+                            <% } else { %>
+                                <p class="text-muted">No recent activity found.</p>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card glass-card p-4 bg-primary text-white h-100">
+                        <h5 class="fw-bold mb-3">Quick Actions</h5>
+                        <div class="d-grid gap-2">
+                            <a href="/admin/exams" class="btn btn-light text-primary fw-bold text-start p-3 shadow-sm">
+                                <i class="bi bi-plus-lg me-2"></i> Create New Exam
+                            </a>
+                            <a href="/admin/subjects" class="btn btn-light text-primary fw-bold text-start p-3 shadow-sm">
+                                <i class="bi bi-folder-plus me-2"></i> Add New Subject
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/head') %>
+    <title>Login | Pariksha</title>
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #1e40af 100%);
+        }
+        .login-card {
+            max-width: 400px;
+            width: 100%;
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        .brand-logo {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            letter-spacing: -1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card login-card p-5 bg-white">
+        <div class="text-center mb-4">
+            <div class="brand-logo mb-1">Pariksha</div>
+            <p class="text-muted small">Secure. Smart. Seamless.</p>
+        </div>
+        
+        <form action="/login" method="POST">
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Email Address</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0"><i class="bi bi-envelope"></i></span>
+                    <input type="email" name="email" class="form-control bg-light border-0" placeholder="admin@pariksha.in" required>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label small fw-bold">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0"><i class="bi bi-lock"></i></span>
+                    <input type="password" name="password" class="form-control bg-light border-0" placeholder="••••••••" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow">Sign In</button>
+        </form>
+
+        <div class="mt-4 text-center">
+            <p class="small text-muted">BCA Final Year Project 2026</p>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/head') %>
+    <title>Manage Subjects | Pariksha</title>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <%- include('partials/sidebar', {currentPage: 'subjects'}) %>
+
+        <div class="col-md-10 offset-md-2 p-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold">Subject Management</h2>
+                <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#addSubjectForm">
+                    <i class="bi bi-plus-lg me-2"></i>Add Subject
+                </button>
+            </div>
+
+            <div class="collapse mb-4" id="addSubjectForm">
+                <div class="card glass-card p-4 border-0">
+                    <form action="/admin/subjects/add" method="POST" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Subject Name</label>
+                            <input type="text" name="subject_name" class="form-control bg-light border-0" placeholder="e.g. Java" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Code</label>
+                            <input type="text" name="subject_code" class="form-control bg-light border-0" placeholder="BCA-101" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Course</label>
+                            <select name="course_id" class="form-select bg-light border-0">
+                                <% courses.forEach(c => { %>
+                                    <option value="<%= c.course_id %>"><%= c.course_name %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success w-100 shadow-sm">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card glass-card border-0 shadow-sm">
+                <table class="table mb-0 align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Code</th>
+                            <th>Subject Name</th>
+                            <th>Course</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% subjects.forEach(s => { %>
+                        <tr>
+                            <td class="ps-4 fw-bold text-primary"><%= s.subject_code %></td>
+                            <td><%= s.subject_name %></td>
+                            <td><span class="badge bg-secondary-subtle text-secondary"><%= s.course_name %></span></td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="openSubjectModal('<%= s.subject_id %>', '<%= s.subject_name %>', '<%= s.subject_code %>', '<%= s.course_id %>')">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <a href="/admin/subjects/delete/<%= s.subject_id %>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editSubjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Edit Subject</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editSubjectForm" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Subject Name</label>
+                        <input type="text" name="subject_name" id="edit_sub_name" class="form-control bg-light border-0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Subject Code</label>
+                        <input type="text" name="subject_code" id="edit_sub_code" class="form-control bg-light border-0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Course</label>
+                        <select name="course_id" id="edit_course_id" class="form-select bg-light border-0">
+                            <% courses.forEach(c => { %>
+                                <option value="<%= c.course_id %>"><%= c.course_name %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="submit" class="btn btn-primary px-4">Update Subject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openSubjectModal(id, name, code, courseId) {
+        document.getElementById('edit_sub_name').value = name;
+        document.getElementById('edit_sub_code').value = code;
+        document.getElementById('edit_course_id').value = courseId;
+        document.getElementById('editSubjectForm').action = '/admin/subjects/update/' + id;
+        new bootstrap.Modal(document.getElementById('editSubjectModal')).show();
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
