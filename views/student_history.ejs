@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/head') %>
+    <title>My History | Pariksha</title>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--primary-blue);">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/student/dashboard">
+                <i class="bi bi-pen me-2"></i>Pariksha
+            </a>
+            <div class="d-flex align-items-center text-white">
+                <a href="/student/dashboard" class="btn btn-sm btn-outline-light me-2">Back to Exams</a>
+                <a href="/logout" class="btn btn-sm btn-light text-primary rounded-pill">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="card glass-card border-0 shadow-sm p-4 mb-5 bg-white">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 1.5rem;">
+                        <%= user.first_name[0] %><%= user.last_name[0] %>
+                    </div>
+                </div>
+                <div class="col">
+                    <h3 class="fw-bold mb-1"><%= user.first_name %> <%= user.last_name %></h3>
+                    <div class="text-muted">
+                        <span class="me-3"><i class="bi bi-hash me-1"></i>Roll: <%= user.roll_no || 'N/A' %></span>
+                        <span><i class="bi bi-book me-1"></i>Class: <%= user.class_name || 'Not Assigned' %></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="fw-bold mb-4">Past Exam Attempts</h4>
+        <div class="card glass-card border-0 shadow-sm overflow-hidden bg-white">
+            <table class="table mb-0 align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Exam Name</th>
+                        <th>Score</th>
+                        <th>Date</th>
+                        <th class="text-end pe-4">Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (results.length === 0) { %>
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">You haven't attempted any exams yet.</td>
+                        </tr>
+                    <% } %>
+                    <% results.forEach(r => { %>
+                    <tr>
+                        <td class="ps-4 fw-semibold"><%= r.exam_name %></td>
+                        <td class="fw-bold"><%= r.score %> / <%= r.total_questions %></td>
+                        <td class="small text-muted"><%= new Date(r.submitted_at).toLocaleDateString() %></td>
+                        <td class="text-end pe-4">
+                            <span class="badge <%= r.status === 'PASSED' ? 'bg-success' : 'bg-danger' %> rounded-pill">
+                                <%= r.status %>
+                            </span>
+                        </td>
+                    </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('partials/head') %>
+        <title>Exam in Progress | Pariksha</title>
+        <style>
+            .timer-box {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                width: 150px;
+            }
+
+            .question-card {
+                border-left: 5px solid var(--primary-blue);
+                transition: 0.3s;
+            }
+
+            .question-card:hover {
+                border-left: 5px solid var(--secondary-sage);
+            }
+        </style>
+</head>
+
+<body class="bg-light">
+
+    <div class="timer-box card shadow-sm p-3 text-center border-0">
+        <div class="small fw-bold text-muted uppercase mb-1">Time Remaining</div>
+        <div id="timer" class="h4 fw-bold text-primary mb-0">--:--</div>
+    </div>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="mb-5">
+                    <h2 class="fw-bold">
+                        <%= exam.exam_name %>
+                    </h2>
+                    <p class="text-muted">Please answer all questions. Do not refresh or close this tab.</p>
+                </div>
+
+                <form id="examForm" action="/student/exam/<%= exam.exam_id %>/submit" method="POST">
+                    <% questions.forEach((q, index)=> { %>
+                        <div class="card glass-card p-4 mb-4 question-card border-0 shadow-sm">
+                            <h5 class="fw-bold mb-4">Q<%= index + 1 %>. <%= q.question_text %>
+                            </h5>
+
+                            <div class="options-group">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="a"
+                                        id="q<%= q.question_id %>a">
+                                    <label class="form-check-label w-100 p-2 border rounded"
+                                        for="q<%= q.question_id %>a">
+                                        <strong>A:</strong>
+                                        <%= q.option_a %>
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="b"
+                                        id="q<%= q.question_id %>b">
+                                    <label class="form-check-label w-100 p-2 border rounded"
+                                        for="q<%= q.question_id %>b">
+                                        <strong>B:</strong>
+                                        <%= q.option_b %>
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="c"
+                                        id="q<%= q.question_id %>c">
+                                    <label class="form-check-label w-100 p-2 border rounded"
+                                        for="q<%= q.question_id %>c">
+                                        <strong>C:</strong>
+                                        <%= q.option_c %>
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="d"
+                                        id="q<%= q.question_id %>d">
+                                    <label class="form-check-label w-100 p-2 border rounded"
+                                        for="q<%= q.question_id %>d">
+                                        <strong>D:</strong>
+                                        <%= q.option_d %>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <% }) %>
+
+                            <div class="text-center mt-5">
+                                <button type="submit" class="btn btn-success btn-lg px-5 shadow rounded-pill">
+                                    Submit Final Answers <i class="bi bi-cloud-arrow-up ms-2"></i>
+                                </button>
+                            </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple Countdown Timer Logic
+        let timeInMinutes = parseInt("<%= exam.duration_minutes %>");
+        let currentTime = timeInMinutes * 60;
+        const timerDisplay = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = currentTime % 60;
+
+            timerDisplay.innerHTML = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            if (currentTime <= 0) {
+                clearInterval(countdown);
+                alert("Time is up! Your exam will be submitted automatically.");
+                document.getElementById('examForm').submit();
+            }
+            currentTime--;
+        }, 1000);
+    </script>
+</body>
+
+</html>

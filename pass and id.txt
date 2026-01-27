@@ -1,0 +1,7 @@
+Student side 
+email - student@pariksha.in
+password - 123456
+
+admin
+admin@test
+admin123
