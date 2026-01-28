@@ -7,6 +7,7 @@ const app = express()
 
 // 1. Middleware
 app.use(express.urlencoded({ extended: true }))
+app.use(express.json());
 app.set('view engine', 'ejs')
 
 // 2. Session Setup
@@ -311,53 +312,79 @@ app.get('/student/dashboard', async (req, res) => {
 
 // Route to show instructions before starting
 app.get('/student/exam/:examId/start', async (req, res) => {
-  if (!req.session.user || req.session.user.role !== 'student') {
-    return res.redirect('/login')
-  }
-
-  try {
-    const examId = req.params.examId
-    // Fetch exam details to show on the instruction page
-    const [exam] = await db.query(
-      'SELECT e.*, s.subject_name FROM exams e JOIN subjects s ON e.subject_id = s.subject_id WHERE e.exam_id = ?',
-      [examId],
-    )
-
-    // Count how many questions are in this exam
-    const [[{ qCount }]] = await db.query(
-      'SELECT COUNT(*) as qCount FROM questions WHERE exam_id = ?',
-      [examId],
-    )
-
-    res.render('student_exam_start', {
-      user: req.session.user,
-      exam: exam[0],
-      qCount: qCount,
-    })
-  } catch (err) {
-    res.status(500).send('Error loading exam details: ' + err.message)
-  }
-})
-
-// Route to show the actual questions (The Attempt Page)
-app.get('/student/exam/:examId/attempt', async (req, res) => {
     if (!req.session.user || req.session.user.role !== 'student') {
         return res.redirect('/login');
     }
 
     try {
         const examId = req.params.examId;
-        // Fetch exam details for the header/timer
+        const userId = req.session.user.user_id;
+
+        // 1. One-Attempt Restriction
+        const [existing] = await db.query("SELECT result_id FROM results WHERE user_id = ? AND exam_id = ?", [userId, examId]);
+        if (existing.length > 0) return res.redirect('/student/history');
+
+        // 2. Fetch Exam Data
         const [exam] = await db.query("SELECT * FROM exams WHERE exam_id = ?", [examId]);
-        // Fetch all questions for this exam
         const [questions] = await db.query("SELECT * FROM questions WHERE exam_id = ?", [examId]);
 
+        // 3. Persistent Timer Logic
+        if (!req.session.examEndTime || req.session.currentExamId !== examId) {
+            const durationInMs = exam[0].duration_minutes * 60 * 1000;
+            req.session.examEndTime = Date.now() + durationInMs;
+            req.session.currentExamId = examId;
+        }
+
+        const remainingSeconds = Math.max(0, Math.floor((req.session.examEndTime - Date.now()) / 1000));
+
+        res.render('student_exam_attempt', { 
+            user: req.session.user, 
+            exam: exam[0], 
+            questions: questions,
+            remainingSeconds: remainingSeconds 
+        });
+    } catch (err) {
+        res.status(500).send("Error: " + err.message);
+    }
+});
+
+// Route to show the actual questions (The Attempt Page)
+app.get('/student/exam/:examId/attempt', async (req, res) => {
+    // 1. Security Check: Are they logged in as a student?
+    if (!req.session.user || req.session.user.role !== 'student') {
+        return res.redirect('/login');
+    }
+
+    try {
+        const examId = req.params.examId;
+        const userId = req.session.user.user_id;
+
+        // 2. ONE-ATTEMPT RESTRICTION: Check if a result already exists for this student/exam
+        const [existingResult] = await db.query(
+            "SELECT result_id FROM results WHERE user_id = ? AND exam_id = ?", 
+            [userId, examId]
+        );
+
+        if (existingResult.length > 0) {
+            // If they already took it, redirect them away (or show a message)
+            return res.redirect('/student/history'); 
+        }
+
+        // 3. Fetch exam details for the header/timer
+        const [exam] = await db.query("SELECT * FROM exams WHERE exam_id = ?", [examId]);
+        
+        // 4. Fetch all questions for this exam
+        const [questions] = await db.query("SELECT * FROM questions WHERE exam_id = ?", [examId]);
+
+        // 5. If everything is clear, let them take the exam
         res.render('student_exam_attempt', { 
             user: req.session.user, 
             exam: exam[0], 
             questions: questions 
         });
+
     } catch (err) {
+        console.error("Exam Attempt Error:", err);
         res.status(500).send("Error starting exam attempt: " + err.message);
     }
 });
@@ -431,6 +458,25 @@ app.get('/student/history', async (req, res) => {
     } catch (err) {
         console.error("History Error:", err);
         res.status(500).send("Error loading your history: " + err.message);
+    }
+});
+
+// the Logging Route here
+app.post('/api/monitor/log', async (req, res) => {
+    if (!req.session.user) return res.status(401).send("Unauthorized");
+
+    const { examId, eventType, details } = req.body;
+    const userId = req.session.user.user_id;
+
+    try {
+        await db.query(
+            "INSERT INTO monitoring_logs (user_id, exam_id, event_type, event_details) VALUES (?, ?, ?, ?)",
+            [userId, examId, eventType, details]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Failed to log event:", err);
+        res.status(500).json({ success: false });
     }
 });
 

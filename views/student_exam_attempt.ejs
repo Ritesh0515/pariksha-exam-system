@@ -1,123 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <%- include('partials/head') %>
-        <title>Exam in Progress | Pariksha</title>
-        <style>
-            .timer-box {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 1000;
-                width: 150px;
-            }
-
-            .question-card {
-                border-left: 5px solid var(--primary-blue);
-                transition: 0.3s;
-            }
-
-            .question-card:hover {
-                border-left: 5px solid var(--secondary-sage);
-            }
-        </style>
+    <title>Exam in Progress | Pariksha</title>
+    <style>
+        .timer-box { position: fixed; top: 20px; right: 20px; z-index: 1000; width: 150px; }
+        .question-card { border-left: 5px solid var(--primary-blue); transition: 0.3s; }
+        .btn-tts:active { transform: scale(0.95); }
+    </style>
 </head>
-
 <body class="bg-light">
 
-    <div class="timer-box card shadow-sm p-3 text-center border-0">
-        <div class="small fw-bold text-muted uppercase mb-1">Time Remaining</div>
-        <div id="timer" class="h4 fw-bold text-primary mb-0">--:--</div>
+<div id="cheatWarning" class="d-none" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div class="card border-0 shadow-lg text-center p-5" style="max-width: 450px; border-radius: 12px;">
+        <div class="mb-3 text-warning">
+            <i class="bi bi-exclamation-octagon-fill" style="font-size: 3rem;"></i>
+        </div>
+        <h4 class="fw-bold text-dark">Navigation Warning</h4>
+        <p class="text-muted">You have switched tabs or windows. <strong>After 3 warnings, your exam will be automatically submitted.</strong></p>
+        
+        <div class="bg-light p-3 rounded mb-4">
+            <span class="text-uppercase small fw-bold text-secondary">Warning Status</span>
+            <div class="h5 mb-0 mt-1"><span id="switchCountDisplay" class="text-danger fw-bold">0</span> / 3</div>
+        </div>
+
+        <button class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm" onclick="resumeExam()">Resume</button>
     </div>
+</div>
 
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-lg-9">
-                <div class="mb-5">
-                    <h2 class="fw-bold">
-                        <%= exam.exam_name %>
-                    </h2>
-                    <p class="text-muted">Please answer all questions. Do not refresh or close this tab.</p>
-                </div>
+<div class="timer-box card shadow-sm p-3 text-center border-0">
+    <div class="small fw-bold text-muted uppercase mb-1">Time Remaining</div>
+    <div id="timer" class="h4 fw-bold text-primary mb-0">--:--</div>
+</div>
 
-                <form id="examForm" action="/student/exam/<%= exam.exam_id %>/submit" method="POST">
-                    <% questions.forEach((q, index)=> { %>
-                        <div class="card glass-card p-4 mb-4 question-card border-0 shadow-sm">
-                            <h5 class="fw-bold mb-4">Q<%= index + 1 %>. <%= q.question_text %>
-                            </h5>
-
-                            <div class="options-group">
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="a"
-                                        id="q<%= q.question_id %>a">
-                                    <label class="form-check-label w-100 p-2 border rounded"
-                                        for="q<%= q.question_id %>a">
-                                        <strong>A:</strong>
-                                        <%= q.option_a %>
-                                    </label>
-                                </div>
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="b"
-                                        id="q<%= q.question_id %>b">
-                                    <label class="form-check-label w-100 p-2 border rounded"
-                                        for="q<%= q.question_id %>b">
-                                        <strong>B:</strong>
-                                        <%= q.option_b %>
-                                    </label>
-                                </div>
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="c"
-                                        id="q<%= q.question_id %>c">
-                                    <label class="form-check-label w-100 p-2 border rounded"
-                                        for="q<%= q.question_id %>c">
-                                        <strong>C:</strong>
-                                        <%= q.option_c %>
-                                    </label>
-                                </div>
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="d"
-                                        id="q<%= q.question_id %>d">
-                                    <label class="form-check-label w-100 p-2 border rounded"
-                                        for="q<%= q.question_id %>d">
-                                        <strong>D:</strong>
-                                        <%= q.option_d %>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        <% }) %>
-
-                            <div class="text-center mt-5">
-                                <button type="submit" class="btn btn-success btn-lg px-5 shadow rounded-pill">
-                                    Submit Final Answers <i class="bi bi-cloud-arrow-up ms-2"></i>
-                                </button>
-                            </div>
-                </form>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="mb-5">
+                <h2 class="fw-bold"><%= exam.exam_name %></h2>
+                <p class="text-muted">Please answer all questions. Monitoring is active.</p>
             </div>
+
+            <form id="examForm" action="/student/exam/<%= exam.exam_id %>/submit" method="POST">
+                <% questions.forEach((q, index)=> { %>
+                    <div class="card glass-card p-4 mb-4 question-card border-0 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <h5 class="fw-bold mb-0">Q<%= index + 1 %>. <%= q.question_text %></h5>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 btn-tts" 
+    onclick="speakQuestion('<%= q.question_text %>', '<%= q.option_a %>', '<%= q.option_b %>', '<%= q.option_c %>', '<%= q.option_d %>')">
+    <i class="bi bi-volume-up-fill me-1"></i> Listen
+</button>
+                        </div>
+                        <div class="options-group">
+                            <% ['a', 'b', 'c', 'd'].forEach(opt => { %>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="<%= opt %>" id="q<%= q.question_id %><%= opt %>">
+                                    <label class="form-check-label w-100 p-2 border rounded" for="q<%= q.question_id %><%= opt %>">
+                                        <strong><%= opt.toUpperCase() %>:</strong> <%= q['option_' + opt] %>
+                                    </label>
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                <% }) %>
+                <div class="text-center mt-5">
+                    <button type="submit" class="btn btn-success btn-lg px-5 shadow rounded-pill">Submit Exam</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <script>
-        // Simple Countdown Timer Logic
-        let timeInMinutes = parseInt("<%= exam.duration_minutes %>");
-        let currentTime = timeInMinutes * 60;
-        const timerDisplay = document.getElementById('timer');
+<script>
+    const examId = "<%= exam.exam_id %>";
+    let tabSwitchCount = 0;
 
-        const countdown = setInterval(() => {
-            const minutes = Math.floor(currentTime / 60);
-            const seconds = currentTime % 60;
+    // --- 1. PERSISTENT TIMER ---
+    let currentTime = parseInt("<%= remainingSeconds %>"); 
+    const timerDisplay = document.getElementById('timer');
 
-            timerDisplay.innerHTML = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    const countdown = setInterval(() => {
+        const mins = Math.floor(currentTime / 60);
+        const secs = currentTime % 60;
+        timerDisplay.innerHTML = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        
+        if (currentTime <= 0) {
+            clearInterval(countdown);
+            document.getElementById('examForm').submit();
+        }
+        currentTime--;
+    }, 1000);
 
-            if (currentTime <= 0) {
-                clearInterval(countdown);
-                alert("Time is up! Your exam will be submitted automatically.");
+    // --- 2. TEXT TO SPEECH (FIXED VOICE & OPTIONS) ---
+    let voices = [];
+    function setVoices() { 
+        voices = window.speechSynthesis.getVoices(); 
+    }
+    window.speechSynthesis.onvoiceschanged = setVoices;
+    setVoices();
+
+    function speakQuestion(qText, a, b, c, d) {
+        window.speechSynthesis.cancel();
+        
+        // Construct the full text including options
+        const fullText = `${qText}. Option A: ${a}. Option B: ${b}. Option C: ${c}. Option D: ${d}.`;
+        
+        const utterance = new SpeechSynthesisUtterance(fullText);
+        
+        // Priority: Look for "Google" or "Natural" English voices first
+        const preferredVoice = voices.find(v => v.name.includes('Google') && v.lang.includes('en')) 
+                            || voices.find(v => v.lang.includes('en')) 
+                            || voices[0];
+                            
+        if (preferredVoice) utterance.voice = preferredVoice;
+        utterance.rate = 1.0; // Standard 1x speed
+        
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // --- 3. TAB SWITCH DETECTION ---
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            tabSwitchCount++;
+            document.getElementById('switchCountDisplay').innerText = tabSwitchCount;
+            
+            fetch('/api/monitor/log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ examId, eventType: 'TAB_SWITCH', details: `Count: ${tabSwitchCount}` })
+            });
+
+            document.getElementById('cheatWarning').classList.remove('d-none');
+            document.getElementById('cheatWarning').style.display = 'flex';
+
+            if (tabSwitchCount >= 3) {
+                alert("Final Warning: Limit reached. Submitting exam.");
                 document.getElementById('examForm').submit();
             }
-            currentTime--;
-        }, 1000);
-    </script>
-</body>
+        }
+    });
 
+    function resumeExam() {
+        document.getElementById('cheatWarning').classList.add('d-none');
+        document.getElementById('cheatWarning').style.display = 'none';
+    }
+</script>
+</body>
 </html>
