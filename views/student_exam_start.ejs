@@ -3,32 +3,97 @@
 <head>
     <%- include('partials/head') %>
     <title>Exam Instructions | Pariksha</title>
+    <style>
+        .instruction-card {
+            border-radius: 24px;
+            background: #ffffff;
+        }
+        .stat-badge {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #2563eb;
+            display: block;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+        }
+        .warning-item {
+            border-left: 4px solid #ef4444;
+            background-color: #fef2f2;
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <div class="container py-5">
         <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card glass-card p-5 border-0 shadow-sm">
-                    <div class="text-center mb-4">
-                        <span class="badge bg-primary-subtle text-primary mb-2"><%= exam.subject_name %></span>
-                        <h2 class="fw-bold"><%= exam.exam_name %></h2>
-                        <hr class="w-25 mx-auto">
+            <div class="col-md-7">
+                <div class="card instruction-card p-5 border-0 shadow-lg">
+                    <div class="text-center mb-5">
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-3">
+                            <i class="bi bi-journal-text me-1"></i> <%= exam.subject_name %>
+                        </span>
+                        <h2 class="fw-bold text-dark"><%= exam.exam_name %></h2>
+                        <p class="text-muted">Review the details below before beginning your attempt.</p>
                     </div>
 
-                    <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Important Instructions:</h5>
-                    <ul class="list-group list-group-flush mb-4">
-                        <li class="list-group-item bg-transparent"><i class="bi bi-check2 me-2 text-success"></i> Total Questions: <strong><%= qCount %></strong></li>
-                        <li class="list-group-item bg-transparent"><i class="bi bi-check2 me-2 text-success"></i> Time Limit: <strong><%= exam.duration_minutes %> Minutes</strong></li>
-                        <li class="list-group-item bg-transparent"><i class="bi bi-check2 me-2 text-success"></i> Passing Marks: <strong><%= exam.pass_marks %> / <%= exam.total_marks %></strong></li>
-                        <li class="list-group-item bg-transparent"><i class="bi bi-exclamation-triangle me-2 text-danger"></i> Do not refresh the page after starting the exam.</li>
-                        <li class="list-group-item bg-transparent"><i class="bi bi-exclamation-triangle me-2 text-danger"></i> Ensure you have a stable internet connection.</li>
-                    </ul>
+                    <div class="row g-3 mb-5">
+                        <div class="col-4">
+                            <div class="stat-badge">
+                                <span class="stat-label">Questions</span>
+                                <span class="stat-value"><%= qCount %></span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-badge">
+                                <span class="stat-label">Duration</span>
+                                <span class="stat-value"><%= exam.duration_minutes %>m</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-badge">
+                                <span class="stat-label">Pass Marks</span>
+                                <span class="stat-value"><%= exam.pass_marks %></span>
+                            </div>
+                        </div>
+                    </div>
 
-                    <div class="d-grid gap-2">
-                        <a href="/student/exam/<%= exam.exam_id %>/attempt" class="btn btn-primary btn-lg shadow">
-                            I am Ready to Start <i class="bi bi-play-fill ms-2"></i>
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-shield-lock me-2"></i>Exam Rules:</h6>
+                    <div class="mb-5">
+                        <div class="warning-item d-flex align-items-center">
+                            <i class="bi bi-window-x me-3 fs-5"></i>
+                            <span>Switching tabs more than <strong>3 times</strong> will auto-submit your exam.</span>
+                        </div>
+                        <div class="warning-item d-flex align-items-center">
+                            <i class="bi bi-arrow-clockwise me-3 fs-5"></i>
+                            <span>Do not refresh the page. The timer will continue to run.</span>
+                        </div>
+                        <div class="warning-item d-flex align-items-center" style="border-left-color: #f59e0b; background-color: #fffbeb;">
+                            <i class="bi bi-wifi-off me-3 fs-5 text-warning"></i>
+                            <span>Ensure your internet is stable before clicking 'Start'.</span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-3">
+                        <a href="/student/exam/<%= exam.exam_id %>/attempt" class="btn btn-primary btn-lg shadow rounded-pill py-3 fw-bold">
+                            I am Ready to Start <i class="bi bi-play-circle-fill ms-2"></i>
                         </a>
-                        <a href="/student/dashboard" class="btn btn-link text-muted">Go Back to Dashboard</a>
+                        <a href="/student/dashboard" class="btn btn-link text-muted text-decoration-none small">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                        </a>
                     </div>
                 </div>
             </div>

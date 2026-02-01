@@ -6,13 +6,12 @@
 
 <style>
     :root {
-        --primary-blue: #1E3A8A;
-        --secondary-sage: #10B981;
-        --success-green: #059669;
-        --warning-orange: #D97706;
-        --danger-red: #DC2626;
+        /* Reverted to your original Midnight Blue */
+        --primary-blue: #1E3A8A; 
+        --primary-hover: #172e6e;
         --bg-light: #F8FAFC;
         --text-dark: #1F2937;
+        --border-color: #E2E8F0;
     }
 
     body { 
@@ -23,24 +22,41 @@
 
     .glass-card {
         background: white;
-        border: 1px solid #E2E8F0;
+        border: 1px solid var(--border-color);
         border-radius: 12px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
-    .btn-primary { background-color: var(--primary-blue); border: none; }
-    .btn-primary:hover { background-color: #1e40af; }
+    .btn-primary { background-color: var(--primary-blue); border: none; border-radius: 8px; }
+    .btn-primary:hover { background-color: var(--primary-hover); }
     
-    .btn-success { background-color: var(--secondary-sage); border: none; }
-    .btn-success:hover { background-color: #0d9488; }
-
+    /* Sidebar Styling - Back to Dark Blue */
     .sidebar {
         height: 100vh;
         background: var(--primary-blue);
         color: white;
         position: fixed;
+        padding: 1.5rem;
     }
     
-    .nav-link { color: rgba(255,255,255,0.8); transition: 0.3s; }
-    .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.1); border-radius: 8px; }
+    .sidebar .nav-link { 
+        color: rgba(255,255,255,0.7); 
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 5px;
+        transition: 0.3s; 
+    }
+    
+    .sidebar .nav-link:hover { 
+        color: white; 
+        background: rgba(255,255,255,0.1); 
+    }
+
+    .sidebar .nav-link.active { 
+        color: white; 
+        background: rgba(255,255,255,0.2); 
+        font-weight: 600;
+    }
+
+    .sidebar hr { border-color: rgba(255,255,255,0.2); }
 </style>

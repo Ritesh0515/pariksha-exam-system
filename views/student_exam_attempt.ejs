@@ -4,67 +4,168 @@
     <%- include('partials/head') %>
     <title>Exam in Progress | Pariksha</title>
     <style>
-        .timer-box { position: fixed; top: 20px; right: 20px; z-index: 1000; width: 150px; }
-        .question-card { border-left: 5px solid var(--primary-blue); transition: 0.3s; }
-        .btn-tts:active { transform: scale(0.95); }
+        :root {
+            --primary-blue: #2563eb;
+            --bg-light: #f8fafc;
+        }
+        body { background-color: var(--bg-light); }
+        
+        /* Sticky Header */
+        .exam-header {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .timer-badge {
+            background: #fff;
+            border: 2px solid var(--primary-blue);
+            border-radius: 50px;
+            padding: 8px 20px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Question Cards */
+        .question-card {
+            border-radius: 20px;
+            border: none;
+            background: #ffffff;
+        }
+
+        .question-number {
+            width: 35px;
+            height: 35px;
+            background-color: var(--primary-blue);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        /* Option Tiles */
+        .option-tile {
+            display: block;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            background-color: #fff;
+            border: 2px solid #f1f5f9;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .form-check-input { display: none; } /* Hide standard radio buttons */
+
+        .form-check-input:checked + .option-tile {
+            background-color: #eff6ff;
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .option-tile:hover {
+            border-color: #cbd5e1;
+            background-color: #f8fafc;
+        }
+
+        /* Anti-Cheat Overlay */
+        #cheatWarning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.98);
+            z-index: 9999;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div id="cheatWarning" class="d-none" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div class="card border-0 shadow-lg text-center p-5" style="max-width: 450px; border-radius: 12px;">
-        <div class="mb-3 text-warning">
-            <i class="bi bi-exclamation-octagon-fill" style="font-size: 3rem;"></i>
+<div id="cheatWarning">
+    <div class="card border-0 shadow-lg text-center p-5" style="max-width: 450px; border-radius: 24px;">
+        <div class="mb-3 text-danger">
+            <i class="bi bi-exclamation-triangle-fill" style="font-size: 4rem;"></i>
         </div>
-        <h4 class="fw-bold text-dark">Navigation Warning</h4>
-        <p class="text-muted">You have switched tabs or windows. <strong>After 3 warnings, your exam will be automatically submitted.</strong></p>
+        <h3 class="fw-bold text-dark" id="warningTitle">Navigation Warning</h3>
+        <p class="text-muted fs-5 mb-4" id="warningMessage">
+            You left the exam screen. This activity has been recorded.
+        </p>
         
-        <div class="bg-light p-3 rounded mb-4">
+        <div class="bg-light p-3 rounded-4 mb-4 border">
             <span class="text-uppercase small fw-bold text-secondary">Warning Status</span>
-            <div class="h5 mb-0 mt-1"><span id="switchCountDisplay" class="text-danger fw-bold">0</span> / 3</div>
+            <div class="display-6 fw-bold text-danger mt-1">
+                <span id="switchCountDisplay">0</span> / 3
+            </div>
         </div>
 
-        <button class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm" onclick="resumeExam()">Resume</button>
+        <button class="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow" id="resumeBtn" onclick="resumeExam()">
+            Resume Exam
+        </button>
     </div>
 </div>
 
-<div class="timer-box card shadow-sm p-3 text-center border-0">
-    <div class="small fw-bold text-muted uppercase mb-1">Time Remaining</div>
-    <div id="timer" class="h4 fw-bold text-primary mb-0">--:--</div>
-</div>
+<header class="exam-header py-3 mb-5 shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="fw-bold mb-0 text-dark"><%= exam.exam_name %></h4>
+            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">
+                <i class="bi bi-shield-check me-1"></i> Monitoring Active
+            </span>
+        </div>
+        <div class="timer-badge d-flex align-items-center">
+            <i class="bi bi-alarm-fill me-2 text-primary"></i>
+            <span id="timer" class="h4 mb-0 fw-bold font-monospace">--:--</span>
+        </div>
+    </div>
+</header>
 
-<div class="container py-5">
+<div class="container pb-5">
     <div class="row justify-content-center">
-        <div class="col-lg-9">
-            <div class="mb-5">
-                <h2 class="fw-bold"><%= exam.exam_name %></h2>
-                <p class="text-muted">Please answer all questions. Monitoring is active.</p>
-            </div>
-
+        <div class="col-lg-8">
+            
             <form id="examForm" action="/student/exam/<%= exam.exam_id %>/submit" method="POST">
                 <% questions.forEach((q, index)=> { %>
-                    <div class="card glass-card p-4 mb-4 question-card border-0 shadow-sm">
+                    <div class="card p-4 mb-4 question-card shadow-sm">
                         <div class="d-flex justify-content-between align-items-start mb-4">
-                            <h5 class="fw-bold mb-0">Q<%= index + 1 %>. <%= q.question_text %></h5>
-                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 btn-tts" 
-    onclick="speakQuestion('<%= q.question_text %>', '<%= q.option_a %>', '<%= q.option_b %>', '<%= q.option_c %>', '<%= q.option_d %>')">
-    <i class="bi bi-volume-up-fill me-1"></i> Listen
-</button>
+                            <div class="d-flex align-items-center">
+                                <div class="question-number me-3"><%= index + 1 %></div>
+                                <h5 class="fw-bold text-dark mb-0"><%= q.question_text %></h5>
+                            </div>
+                            <button type="button" class="btn btn-light btn-sm rounded-pill px-3 border shadow-sm" 
+                                onclick="speakQuestion('<%= q.question_text %>', '<%= q.option_a %>', '<%= q.option_b %>', '<%= q.option_c %>', '<%= q.option_d %>')">
+                                <i class="bi bi-volume-up-fill me-1"></i> Listen
+                            </button>
                         </div>
+
                         <div class="options-group">
                             <% ['a', 'b', 'c', 'd'].forEach(opt => { %>
-                                <div class="form-check mb-3">
+                                <div class="form-check p-0">
                                     <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="<%= opt %>" id="q<%= q.question_id %><%= opt %>">
-                                    <label class="form-check-label w-100 p-2 border rounded" for="q<%= q.question_id %><%= opt %>">
-                                        <strong><%= opt.toUpperCase() %>:</strong> <%= q['option_' + opt] %>
+                                    <label class="option-tile shadow-sm" for="q<%= q.question_id %><%= opt %>">
+                                        <span class="me-2 text-muted fw-bold text-uppercase"><%= opt %>:</span> <%= q['option_' + opt] %>
                                     </label>
                                 </div>
                             <% }) %>
                         </div>
                     </div>
                 <% }) %>
-                <div class="text-center mt-5">
-                    <button type="submit" class="btn btn-success btn-lg px-5 shadow rounded-pill">Submit Exam</button>
+
+                <div class="card p-5 rounded-4 border-0 shadow-sm text-center mt-5 bg-white">
+                    <h4 class="fw-bold mb-3">Finish Exam</h4>
+                    <p class="text-muted mb-4">Check your answers one last time. Once you submit, you cannot change them.</p>
+                    <button type="submit" class="btn btn-success btn-lg px-5 shadow rounded-pill fw-bold py-3" onclick="return confirm('Do you want to submit your final answers?')">
+                        Final Submission <i class="bi bi-check2-all ms-2"></i>
+                    </button>
                 </div>
             </form>
         </div>
@@ -75,7 +176,7 @@
     const examId = "<%= exam.exam_id %>";
     let tabSwitchCount = 0;
 
-    // --- 1. PERSISTENT TIMER ---
+    // --- 1. PERSISTENT TIMER LOGIC ---
     let currentTime = parseInt("<%= remainingSeconds %>"); 
     const timerDisplay = document.getElementById('timer');
 
@@ -84,6 +185,11 @@
         const secs = currentTime % 60;
         timerDisplay.innerHTML = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         
+        // Turn red if less than 1 minute remains
+        if (currentTime < 60) {
+            timerDisplay.classList.add('text-danger');
+        }
+
         if (currentTime <= 0) {
             clearInterval(countdown);
             document.getElementById('examForm').submit();
@@ -91,7 +197,7 @@
         currentTime--;
     }, 1000);
 
-    // --- 2. TEXT TO SPEECH (FIXED VOICE & OPTIONS) ---
+    // --- 2. TEXT TO SPEECH (TTS) LOGIC ---
     let voices = [];
     function setVoices() { 
         voices = window.speechSynthesis.getVoices(); 
@@ -101,47 +207,64 @@
 
     function speakQuestion(qText, a, b, c, d) {
         window.speechSynthesis.cancel();
-        
-        // Construct the full text including options
         const fullText = `${qText}. Option A: ${a}. Option B: ${b}. Option C: ${c}. Option D: ${d}.`;
-        
         const utterance = new SpeechSynthesisUtterance(fullText);
         
-        // Priority: Look for "Google" or "Natural" English voices first
+        // Find a natural English voice
         const preferredVoice = voices.find(v => v.name.includes('Google') && v.lang.includes('en')) 
                             || voices.find(v => v.lang.includes('en')) 
                             || voices[0];
-                            
-        if (preferredVoice) utterance.voice = preferredVoice;
-        utterance.rate = 1.0; // Standard 1x speed
         
+        if (preferredVoice) utterance.voice = preferredVoice;
+        utterance.rate = 0.9; // Slightly slower for clarity
         window.speechSynthesis.speak(utterance);
     }
 
-    // --- 3. TAB SWITCH DETECTION ---
+    // --- 3. ANTI-CHEAT TAB DETECTION ---
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             tabSwitchCount++;
-            document.getElementById('switchCountDisplay').innerText = tabSwitchCount;
             
+            // Update UI
+            document.getElementById('switchCountDisplay').innerText = tabSwitchCount;
+
+            // Log activity to server
             fetch('/api/monitor/log', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ examId, eventType: 'TAB_SWITCH', details: `Count: ${tabSwitchCount}` })
+                body: JSON.stringify({ examId, eventType: 'TAB_SWITCH', details: `Warning ${tabSwitchCount}` })
             });
 
-            document.getElementById('cheatWarning').classList.remove('d-none');
-            document.getElementById('cheatWarning').style.display = 'flex';
+            // Update warning messages
+            const msgArea = document.getElementById('warningMessage');
+            const titleArea = document.getElementById('warningTitle');
+            const resumeBtn = document.getElementById('resumeBtn');
 
-            if (tabSwitchCount >= 3) {
-                alert("Final Warning: Limit reached. Submitting exam.");
-                document.getElementById('examForm').submit();
+            if (tabSwitchCount === 1) {
+                titleArea.innerText = "Warning 1 of 3";
+                msgArea.innerHTML = "You switched tabs or minimized the browser. Please stay on this screen.";
+            } 
+            else if (tabSwitchCount === 2) {
+                titleArea.innerText = "Warning 2 of 3";
+                msgArea.innerHTML = "<strong>Attention:</strong> If you leave one more time, your exam will be <strong>automatically submitted</strong>.";
+            } 
+            else if (tabSwitchCount >= 3) {
+                titleArea.innerText = "Automatic Submission";
+                msgArea.innerHTML = "The limit has been reached. Your exam is being submitted...";
+                resumeBtn.innerText = "Submitting...";
+                resumeBtn.disabled = true;
+
+                setTimeout(() => {
+                    document.getElementById('examForm').submit();
+                }, 2000);
             }
+
+            // Show the overlay
+            document.getElementById('cheatWarning').style.display = 'flex';
         }
     });
 
     function resumeExam() {
-        document.getElementById('cheatWarning').classList.add('d-none');
         document.getElementById('cheatWarning').style.display = 'none';
     }
 </script>

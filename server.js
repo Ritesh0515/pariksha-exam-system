@@ -385,7 +385,8 @@ app.get('/student/dashboard', async (req, res) => {
 
         res.render('student_dashboard', { 
             user: req.session.user, 
-            exams: exams 
+            exams: exams ,
+            activeExamId: req.session.currentExamId || null
         });
     } catch (err) {
       
@@ -408,25 +409,19 @@ app.get('/student/exam/:examId/start', async (req, res) => {
         const [existing] = await db.query("SELECT result_id FROM results WHERE user_id = ? AND exam_id = ?", [userId, examId]);
         if (existing.length > 0) return res.redirect('/student/history');
 
-        // 2. Fetch Exam Data
-        const [exam] = await db.query("SELECT * FROM exams WHERE exam_id = ?", [examId]);
-        const [questions] = await db.query("SELECT * FROM questions WHERE exam_id = ?", [examId]);
+        // 2. Fetch Exam Data with Subject Name
+        const [exam] = await db.query("SELECT e.*, s.subject_name FROM exams e JOIN subjects s ON e.subject_id = s.subject_id WHERE e.exam_id = ?", [examId]);
+        
+        // 3. Get Question Count
+        const [[{ qCount }]] = await db.query("SELECT COUNT(*) as qCount FROM questions WHERE exam_id = ?", [examId]);
 
-        // 3. Persistent Timer Logic
-        if (!req.session.examEndTime || req.session.currentExamId !== examId) {
-            const durationInMs = exam[0].duration_minutes * 60 * 1000;
-            req.session.examEndTime = Date.now() + durationInMs;
-            req.session.currentExamId = examId;
-        }
-
-        const remainingSeconds = Math.max(0, Math.floor((req.session.examEndTime - Date.now()) / 1000));
-
-        res.render('student_exam_attempt', { 
+        // 4. Render the Instructions Page (Not the exam yet!)
+        res.render('student_exam_start', { 
             user: req.session.user, 
             exam: exam[0], 
-            questions: questions,
-            remainingSeconds: remainingSeconds 
+            qCount: qCount 
         });
+
     } catch (err) {
         res.status(500).send("Error: " + err.message);
     }
@@ -443,28 +438,39 @@ app.get('/student/exam/:examId/attempt', async (req, res) => {
         const examId = req.params.examId;
         const userId = req.session.user.user_id;
 
-        // 2. ONE-ATTEMPT RESTRICTION: Check if a result already exists for this student/exam
+        // 2. ONE-ATTEMPT RESTRICTION
         const [existingResult] = await db.query(
             "SELECT result_id FROM results WHERE user_id = ? AND exam_id = ?", 
             [userId, examId]
         );
 
         if (existingResult.length > 0) {
-            // If they already took it, redirect them away (or show a message)
             return res.redirect('/student/history'); 
         }
 
-        // 3. Fetch exam details for the header/timer
+        // 3. Fetch exam details
         const [exam] = await db.query("SELECT * FROM exams WHERE exam_id = ?", [examId]);
         
-        // 4. Fetch all questions for this exam
+        // 4. Fetch all questions
         const [questions] = await db.query("SELECT * FROM questions WHERE exam_id = ?", [examId]);
 
-        // 5. If everything is clear, let them take the exam
+        // --- NEW: PERSISTENT TIMER LOGIC ---
+        // If there is no end time in the session, or if the student switched to a different exam
+        if (!req.session.examEndTime || req.session.currentExamId !== examId) {
+            const durationInMs = exam[0].duration_minutes * 60 * 1000;
+            req.session.examEndTime = Date.now() + durationInMs;
+            req.session.currentExamId = examId;
+        }
+
+        // Calculate how many seconds are left
+        const remainingSeconds = Math.max(0, Math.floor((req.session.examEndTime - Date.now()) / 1000));
+
+        // 5. Render the page with the timer data
         res.render('student_exam_attempt', { 
             user: req.session.user, 
             exam: exam[0], 
-            questions: questions 
+            questions: questions,
+            remainingSeconds: remainingSeconds // PASS THIS TO THE EJS
         });
 
     } catch (err) {
@@ -499,6 +505,9 @@ app.post('/student/exam/:examId/submit', async (req, res) => {
             "INSERT INTO results (user_id, exam_id, score, total_questions, status) VALUES (?, ?, ?, ?, ?)",
             [userId, examId, score, totalQuestions, status]
         );
+
+        delete req.session.examEndTime;
+        delete req.session.currentExamId;
 
         res.render('student_result', {
             user: req.session.user,
@@ -562,6 +571,13 @@ app.post('/api/monitor/log', async (req, res) => {
         console.error("Failed to log event:", err);
         res.status(500).json({ success: false });
     }
+});
+
+// Add this at the very bottom of your student routes
+app.get('/student/exam/quit', (req, res) => {
+    delete req.session.examEndTime;
+    delete req.session.currentExamId;
+    res.redirect('/student/dashboard');
 });
 
 app.listen(3000, () => {

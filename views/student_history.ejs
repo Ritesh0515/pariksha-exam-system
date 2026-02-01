@@ -3,65 +3,122 @@
 <head>
     <%- include('partials/head') %>
     <title>My History | Pariksha</title>
+    <style>
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            border-radius: 20px;
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+        }
+        .history-table thead th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            border-top: none;
+        }
+        .status-badge-pass { background-color: #f0fdf4; color: #16a34a; border: 1px solid #bcf0da; }
+        .status-badge-fail { background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .score-box { font-size: 1.1rem; color: #1e293b; }
+    </style>
 </head>
 <body class="bg-light">
 
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--primary-blue);">
+    <nav class="navbar navbar-expand-lg navbar-dark py-3" style="background-color: #2563eb;">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="/student/dashboard">
-                <i class="bi bi-pen me-2"></i>Pariksha
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="/student/dashboard">
+                <i class="bi bi-pen-fill me-2"></i>Pariksha
             </a>
-            <div class="d-flex align-items-center text-white">
-                <a href="/student/dashboard" class="btn btn-sm btn-outline-light me-2">Back to Exams</a>
-                <a href="/logout" class="btn btn-sm btn-light text-primary rounded-pill">Logout</a>
+            <div class="ms-auto d-flex align-items-center">
+                <a href="/student/dashboard" class="btn btn-sm btn-outline-light rounded-pill px-3 me-2">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                </a>
+                <a href="/logout" class="btn btn-sm btn-light text-primary rounded-pill px-3 fw-bold">Logout</a>
             </div>
         </div>
     </nav>
 
     <div class="container py-5">
-        <div class="card glass-card border-0 shadow-sm p-4 mb-5 bg-white">
+        
+        <div class="card border-0 shadow-sm p-4 mb-5 bg-white rounded-4">
             <div class="row align-items-center">
                 <div class="col-auto">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 1.5rem;">
+                    <div class="profile-avatar">
                         <%= user.first_name[0] %><%= user.last_name[0] %>
                     </div>
                 </div>
-                <div class="col">
-                    <h3 class="fw-bold mb-1"><%= user.first_name %> <%= user.last_name %></h3>
-                    <div class="text-muted">
-                        <span class="me-3"><i class="bi bi-hash me-1"></i>Roll: <%= user.roll_no || 'N/A' %></span>
-                        <span><i class="bi bi-book me-1"></i>Class: <%= user.class_name || 'Not Assigned' %></span>
+                <div class="col ms-2">
+                    <h2 class="fw-bold text-dark mb-1"><%= user.first_name %> <%= user.last_name %></h2>
+                    <div class="d-flex gap-3">
+                        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
+                            <i class="bi bi-person-badge me-2"></i>Roll No: <%= user.roll_no || 'N/A' %>
+                        </span>
+                        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
+                            <i class="bi bi-mortarboard me-2"></i>Class: <%= user.class_name || 'Not Assigned' %>
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <h4 class="fw-bold mb-4">Past Exam Attempts</h4>
-        <div class="card glass-card border-0 shadow-sm overflow-hidden bg-white">
-            <table class="table mb-0 align-middle">
+        <div class="d-flex align-items-center mb-4">
+            <h4 class="fw-bold text-dark mb-0">Past Exam Attempts</h4>
+            <span class="ms-3 badge bg-primary bg-opacity-10 text-primary rounded-pill"><%= results.length %> Attempts</span>
+        </div>
+
+        <div class="card border-0 shadow-sm overflow-hidden bg-white rounded-4">
+            <table class="table mb-0 align-middle history-table table-hover">
                 <thead class="bg-light">
                     <tr>
-                        <th class="ps-4">Exam Name</th>
-                        <th>Score</th>
-                        <th>Date</th>
-                        <th class="text-end pe-4">Result</th>
+                        <th class="ps-4 py-3">Exam Name</th>
+                        <th>Score Obtained</th>
+                        <th>Submission Date</th>
+                        <th class="text-end pe-4">Status</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="border-top-0">
                     <% if (results.length === 0) { %>
                         <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">You haven't attempted any exams yet.</td>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="bi bi-journal-x display-4 opacity-25"></i>
+                                <p class="mt-3">You haven't attempted any exams yet.</p>
+                                <a href="/student/dashboard" class="btn btn-primary btn-sm rounded-pill mt-2 px-4">Browse Exams</a>
+                            </td>
                         </tr>
                     <% } %>
+                    
                     <% results.forEach(r => { %>
                     <tr>
-                        <td class="ps-4 fw-semibold"><%= r.exam_name %></td>
-                        <td class="fw-bold"><%= r.score %> / <%= r.total_questions %></td>
-                        <td class="small text-muted"><%= new Date(r.submitted_at).toLocaleDateString() %></td>
+                        <td class="ps-4 py-3">
+                            <div class="fw-bold text-dark fs-5"><%= r.exam_name %></div>
+                            <div class="text-muted small">Final Assessment</div>
+                        </td>
+                        <td>
+                            <div class="score-box fw-bold">
+                                <%= r.score %> <span class="text-muted fw-normal" style="font-size: 0.85rem;">/ <%= r.total_questions %></span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-dark"><%= new Date(r.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %></div>
+                            <div class="text-muted small"><%= new Date(r.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></div>
+                        </td>
                         <td class="text-end pe-4">
-                            <span class="badge <%= r.status === 'PASSED' ? 'bg-success' : 'bg-danger' %> rounded-pill">
-                                <%= r.status %>
-                            </span>
+                            <% if (r.status === 'PASSED') { %>
+                                <span class="badge status-badge-pass rounded-pill px-4 py-2">
+                                    <i class="bi bi-check-circle-fill me-1"></i> PASSED
+                                </span>
+                            <% } else { %>
+                                <span class="badge status-badge-fail rounded-pill px-4 py-2">
+                                    <i class="bi bi-x-circle-fill me-1"></i> FAILED
+                                </span>
+                            <% } %>
                         </td>
                     </tr>
                     <% }) %>
@@ -69,5 +126,7 @@
             </table>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

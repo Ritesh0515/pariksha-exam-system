@@ -3,26 +3,112 @@
 <head>
     <%- include('partials/head') %>
     <title>Exam Result | Pariksha</title>
+    <style>
+        .result-card {
+            border-radius: 30px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+        .result-header {
+            padding: 40px;
+            background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            border: 8px solid #f1f5f9;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+        .pass-circle { border-color: #dcfce7; color: #16a34a; }
+        .fail-circle { border-color: #fee2e2; color: #dc2626; }
+        
+        .status-banner {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 800;
+            padding: 8px 20px;
+            border-radius: 50px;
+            display: inline-block;
+        }
+    </style>
 </head>
 <body class="bg-light">
-    <div class="container py-5 text-center">
+    <div class="container py-5">
         <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card glass-card p-5 border-0 shadow-sm">
-                    <h2 class="fw-bold mb-4">Exam Results</h2>
-                    <div class="display-4 fw-bold mb-2 <%= status === 'PASSED' ? 'text-success' : 'text-danger' %>">
-                        <%= score %> / <%= total %>
+            <div class="col-md-6 col-lg-5">
+                <div class="card result-card border-0 shadow-lg text-center">
+                    
+                    <div class="result-header">
+                        <div class="mb-3">
+                            <% if (status === 'PASSED') { %>
+                                <span class="status-banner bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-patch-check-fill me-1"></i> Success
+                                </span>
+                            <% } else { %>
+                                <span class="status-banner bg-danger bg-opacity-10 text-danger">
+                                    <i class="bi bi-exclamation-octagon-fill me-1"></i> Needs Improvement
+                                </span>
+                            <% } %>
+                        </div>
+                        <h2 class="fw-bold text-dark mb-0">Exam Results</h2>
+                        <p class="text-muted small mt-1"><%= exam.exam_name %></p>
                     </div>
-                    <h3 class="fw-bold mb-4"><%= status %></h3>
-                    
-                    <p class="text-muted">Exam: <strong><%= exam.exam_name %></strong></p>
-                    
-                    <div class="d-grid mt-4">
-                        <a href="/student/dashboard" class="btn btn-primary">Return to Dashboard</a>
+
+                    <div class="card-body p-5">
+                        <div class="score-circle mb-4 <%= status === 'PASSED' ? 'pass-circle' : 'fail-circle' %>">
+                            <div class="display-5 fw-bold mb-0"><%= score %></div>
+                            <div class="small opacity-75">out of <%= total %></div>
+                        </div>
+
+                        <h3 class="fw-bold mb-2 <%= status === 'PASSED' ? 'text-success' : 'text-danger' %>">
+                            <%= status %>
+                        </h3>
+                        
+                        <p class="text-muted px-4">
+                            <% if (status === 'PASSED') { %>
+                                Congratulations! You have successfully cleared the assessment for <strong><%= exam.exam_name %></strong>.
+                            <% } else { %>
+                                Unfortunately, you did not reach the passing score for <strong><%= exam.exam_name %></strong>. Keep practicing!
+                            <% } %>
+                        </p>
+
+                        <hr class="my-4 opacity-50">
+
+                        <div class="row text-start mb-4">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Percentage</small>
+                                <span class="fw-bold text-dark"><%= Math.round((score/total)*100) %>%</span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Required to Pass</small>
+                                <span class="fw-bold text-dark"><%= exam.pass_marks %> Marks</span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <a href="/student/dashboard" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm py-3">
+                                Return to Dashboard
+                            </a>
+                            <a href="/student/history" class="btn btn-link text-muted text-decoration-none small">
+                                View My History
+                            </a>
+                        </div>
                     </div>
                 </div>
+                
+                <p class="text-center text-muted mt-4 small">
+                    A copy of this result has been saved to your profile.
+                </p>
             </div>
         </div>
     </div>
 </body>
-</html>
+</html> 

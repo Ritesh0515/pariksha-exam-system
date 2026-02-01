@@ -9,53 +9,102 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--primary-blue) 0%, #1e40af 100%);
+            /* Using a smooth gradient that matches the "Pariksha" blue theme */
+            background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
+            margin: 0;
         }
         .login-card {
             max-width: 400px;
-            width: 100%;
-            border-radius: 20px;
+            width: 90%; /* Responsive for mobile */
+            border-radius: 24px;
             border: none;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+        .login-card:hover {
+            transform: translateY(-5px);
         }
         .brand-logo {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 800;
-            color: var(--primary-blue);
-            letter-spacing: -1px;
+            color: #2563eb;
+            letter-spacing: -1.5px;
+        }
+        .form-control:focus {
+            background-color: #fff !important;
+            border: 1px solid #2563eb !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: scale(1.02);
         }
     </style>
 </head>
 <body>
 
-    <div class="card login-card p-5 bg-white">
+    <div class="card login-card p-4 p-md-5 bg-white">
         <div class="text-center mb-4">
             <div class="brand-logo mb-1">Pariksha</div>
-            <p class="text-muted small">Secure. Smart. Seamless.</p>
+            <p class="text-muted small fw-medium">Secure • Smart • Seamless</p>
         </div>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger border-0 small fw-bold mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> <%= error %>
+            </div>
+        <% } %>
         
         <form action="/login" method="POST">
             <div class="mb-3">
-                <label class="form-label small fw-bold">Email Address</label>
+                <label class="form-label small fw-bold text-dark">Email Address</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light border-0"><i class="bi bi-envelope"></i></span>
-                    <input type="email" name="email" class="form-control bg-light border-0" placeholder="admin@pariksha.in" required>
+                    <span class="input-group-text bg-light border-0 text-muted"><i class="bi bi-envelope"></i></span>
+                    <input type="email" name="email" class="form-control bg-light border-0" placeholder="name@example.com" required>
                 </div>
             </div>
             <div class="mb-4">
-                <label class="form-label small fw-bold">Password</label>
+                <label class="form-label small fw-bold text-dark">Password</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light border-0"><i class="bi bi-lock"></i></span>
-                    <input type="password" name="password" class="form-control bg-light border-0" placeholder="••••••••" required>
+                    <span class="input-group-text bg-light border-0 text-muted"><i class="bi bi-lock"></i></span>
+                    <input type="password" name="password" id="passwordInput" class="form-control bg-light border-0" placeholder="••••••••" required>
+                    <button class="btn btn-light border-0" type="button" onclick="togglePassword()">
+                        <i class="bi bi-eye text-muted" id="toggleIcon"></i>
+                    </button>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow">Sign In</button>
+            
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm rounded-3">
+                Sign In <i class="bi bi-arrow-right ms-2"></i>
+            </button>
         </form>
 
-        <div class="mt-4 text-center">
-            <p class="small text-muted">BCA Final Year Project 2026</p>
+        <div class="mt-5 text-center">
+            <div class="border-top pt-3">
+                <p class="small text-muted mb-0">Project Pariksha &copy; 2026</p>
+            </div>
         </div>
     </div>
+
+    <script>
+        // Simple function to show or hide the password
+        function togglePassword() {
+            const input = document.getElementById('passwordInput');
+            const icon = document.getElementById('toggleIcon');
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.type = "password";
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        }
+    </script>
 
 </body>
 </html>

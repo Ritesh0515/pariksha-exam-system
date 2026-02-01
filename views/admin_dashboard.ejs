@@ -3,14 +3,33 @@
 <head>
     <%- include('partials/head') %>
     <title>Dashboard | Pariksha Admin</title>
+    <style>
+        /* Small styling additions to match your theme */
+        .glass-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+        .quick-action-btn {
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .quick-action-btn:hover {
+            background-color: #f8f9fa !important;
+            padding-left: 2rem !important;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-light">
 
 <div class="container-fluid">
     <div class="row">
         <%- include('partials/sidebar', {currentPage: 'dashboard'}) %>
 
         <div class="col-md-10 offset-md-2 p-5">
+            
             <div class="d-flex justify-content-between align-items-center mb-5">
                 <div>
                     <h2 class="fw-bold mb-0">Welcome, <%= user.first_name %>!</h2>
@@ -21,32 +40,32 @@
                         <i class="bi bi-person-circle me-2 text-primary"></i> <%= user.role.toUpperCase() %>
                     </button>
                     <ul class="dropdown-menu border-0 shadow">
-                        <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+                        <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </div>
             </div>
 
             <div class="row mb-5">
                 <div class="col-md-3">
-                    <div class="card glass-card p-4 border-start border-4 border-primary">
+                    <div class="card glass-card p-4 border-0 border-start border-4 border-primary shadow-sm">
                         <div class="text-muted small fw-bold text-uppercase">Total Exams</div>
                         <h2 class="fw-bold mt-2"><%= stats.exams %></h2>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card glass-card p-4 border-start border-4 border-success">
+                    <div class="card glass-card p-4 border-0 border-start border-4 border-success shadow-sm">
                         <div class="text-muted small fw-bold text-uppercase">Students Enrolled</div>
                         <h2 class="fw-bold mt-2"><%= stats.students %></h2>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card glass-card p-4 border-start border-4 border-warning">
+                    <div class="card glass-card p-4 border-0 border-start border-4 border-warning shadow-sm">
                         <div class="text-muted small fw-bold text-uppercase">Total Subjects</div>
                         <h2 class="fw-bold mt-2"><%= stats.subjects %></h2>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card glass-card p-4 border-start border-4 border-danger">
+                    <div class="card glass-card p-4 border-0 border-start border-4 border-danger shadow-sm">
                         <div class="text-muted small fw-bold text-uppercase">Avg. Score</div>
                         <h2 class="fw-bold mt-2">N/A</h2>
                     </div>
@@ -55,31 +74,42 @@
 
             <div class="row">
                 <div class="col-md-8">
-                    <div class="card glass-card p-4 h-100">
-                        <h5 class="fw-bold mb-4">Recent Activity (New Subjects)</h5>
+                    <div class="card glass-card p-4 h-100 shadow-sm border-0">
+                        <h5 class="fw-bold mb-4"><i class="bi bi-clock-history me-2"></i>Recent Activity (New Subjects)</h5>
                         <ul class="list-group list-group-flush">
                             <% if (activities.length > 0) { %>
                                 <% activities.forEach(act => { %>
-                                    <li class="list-group-item px-0 py-3 bg-transparent">
-                                        <i class="bi bi-plus-circle text-primary me-3"></i> 
-                                        New Subject Added: <strong><%= act.subject_name %></strong>
+                                    <li class="list-group-item px-0 py-3 bg-transparent border-light">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                                                <i class="bi bi-plus-circle text-primary"></i> 
+                                            </div>
+                                            <span>New Subject Added: <strong><%= act.subject_name %></strong></span>
+                                        </div>
                                     </li>
                                 <% }) %>
                             <% } else { %>
-                                <p class="text-muted">No recent activity found.</p>
+                                <div class="text-center py-5">
+                                    <i class="bi bi-inbox text-muted display-4"></i>
+                                    <p class="text-muted mt-2">No recent activity found.</p>
+                                </div>
                             <% } %>
                         </ul>
                     </div>
                 </div>
+
                 <div class="col-md-4">
-                    <div class="card glass-card p-4 bg-primary text-white h-100">
-                        <h5 class="fw-bold mb-3">Quick Actions</h5>
-                        <div class="d-grid gap-2">
-                            <a href="/admin/exams" class="btn btn-light text-primary fw-bold text-start p-3 shadow-sm">
+                    <div class="card glass-card p-4 bg-primary text-white h-100 shadow border-0">
+                        <h5 class="fw-bold mb-4">Quick Actions</h5>
+                        <div class="d-grid gap-3">
+                            <a href="/admin/exams" class="btn btn-light text-primary fw-bold text-start p-3 shadow-sm quick-action-btn">
                                 <i class="bi bi-plus-lg me-2"></i> Create New Exam
                             </a>
-                            <a href="/admin/subjects" class="btn btn-light text-primary fw-bold text-start p-3 shadow-sm">
+                            <a href="/admin/subjects" class="btn btn-light text-primary fw-bold text-start p-3 shadow-sm quick-action-btn">
                                 <i class="bi bi-folder-plus me-2"></i> Add New Subject
+                            </a>
+                            <a href="/admin/results" class="btn btn-light text-primary fw-bold text-start p-3 shadow-sm quick-action-btn">
+                                <i class="bi bi-bar-chart-fill me-2"></i> View All Results
                             </a>
                         </div>
                     </div>
