@@ -12,10 +12,12 @@
   "type": "commonjs",
   "dependencies": {
     "body-parser": "^2.2.2",
+    "csv-parser": "^3.2.0",
     "dotenv": "^17.2.3",
     "ejs": "^4.0.1",
     "express": "^5.2.1",
     "express-session": "^1.18.2",
+    "multer": "^2.0.2",
     "mysql2": "^3.16.1"
   }
 }

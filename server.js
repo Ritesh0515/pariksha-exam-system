@@ -1,6 +1,10 @@
 const express = require('express')
 const session = require('express-session')
 const db = require('./db')
+const multer = require('multer');
+const csv = require('csv-parser');
+const fs = require('fs');
+const upload = multer({ dest: 'uploads/' });
 require('dotenv').config()
 
 const app = express()
@@ -9,6 +13,7 @@ const app = express()
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json());
 app.set('view engine', 'ejs')
+app.use(express.static('public'));
 
 // 2. Session Setup
 app.use(
@@ -98,6 +103,7 @@ app.get('/admin/dashboard', async (req, res) => {
     res.status(500).send('Dashboard Error')
   }
 })
+
 
 // --- EXAM MANAGEMENT ---
 app.get('/admin/exams', async (req, res) => {
@@ -198,6 +204,84 @@ app.post('/admin/exams/:examId/questions/add', async (req, res) => {
     res.status(500).send('Error saving question')
   }
 })
+
+// BULK UPLOAD QUESTIONS VIA CSV
+app.post('/admin/exams/:examId/questions/upload', upload.single('csvFile'), async (req, res) => {
+    const examId = req.params.examId;
+    
+    // Safety check for file
+    if (!req.file) return res.status(400).send("No file uploaded.");
+
+    const filePath = req.file.path;
+    const questions = [];
+
+    // 1. Parse the CSV file
+    fs.createReadStream(filePath)
+        .pipe(csv())
+        .on('data', (row) => {
+            // Mapping CSV headers to Database columns
+            // Ensure your CSV has headers: text, a, b, c, d, correct
+            questions.push([
+                examId,
+                row.text,
+                row.a,
+                row.b,
+                row.c,
+                row.d,
+                row.correct
+            ]);
+        })
+        .on('end', async () => {
+            try {
+                if (questions.length > 0) {
+                    // 2. Perform Bulk Insert
+                    const query = `INSERT INTO questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_answer) VALUES ?`;
+                    await db.query(query, [questions]);
+                }
+                
+                // 3. Clean up: Delete the temporary file
+                fs.unlinkSync(filePath);
+                res.redirect(`/admin/exams/${examId}/questions`);
+            } catch (err) {
+                console.error("Bulk Upload Error:", err);
+                res.status(500).send("Error saving bulk questions: " + err.message);
+            }
+        });
+});
+
+// DELETE SINGLE QUESTION
+app.get('/admin/questions/delete/:examId/:questionId', async (req, res) => {
+    try {
+        await db.query('DELETE FROM questions WHERE question_id = ?', [req.params.questionId]);
+        res.redirect(`/admin/exams/${req.params.examId}/questions`);
+    } catch (err) {
+        res.status(500).send("Error deleting question: " + err.message);
+    }
+});
+
+// DELETE ALL QUESTIONS FOR AN EXAM
+app.get('/admin/questions/delete-all/:examId', async (req, res) => {
+    try {
+        await db.query('DELETE FROM questions WHERE exam_id = ?', [req.params.examId]);
+        res.redirect(`/admin/exams/${req.params.examId}/questions`);
+    } catch (err) {
+        res.status(500).send("Error clearing question bank: " + err.message);
+    }
+});
+
+// UPDATE SINGLE QUESTION
+app.post('/admin/questions/update/:examId/:questionId', async (req, res) => {
+    const { question_text, option_a, option_b, option_c, option_d, correct_answer } = req.body;
+    try {
+        await db.query(
+            'UPDATE questions SET question_text=?, option_a=?, option_b=?, option_c=?, option_d=?, correct_answer=? WHERE question_id=?',
+            [question_text, option_a, option_b, option_c, option_d, correct_answer, req.params.questionId]
+        );
+        res.redirect(`/admin/exams/${req.params.examId}/questions`);
+    } catch (err) {
+        res.status(500).send("Error updating question: " + err.message);
+    }
+});
 
 // --- SUBJECT MANAGEMENT ---
 app.get('/admin/subjects', async (req, res) => {
