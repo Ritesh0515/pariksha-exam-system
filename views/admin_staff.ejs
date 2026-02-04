@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/head') %>
+    <title>Manage Staff | Pariksha Admin</title>
+    <style>
+        .role-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .glass-card { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container-fluid">
+    <div class="row">
+        <%- include('partials/sidebar', {currentPage: 'staff'}) %>
+
+        <div class="col-md-10 offset-md-2 p-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold text-dark mb-0">Staff Management</h2>
+                    <p class="text-muted small">Manage roles and account status for your team.</p>
+                </div>
+                <% if (user.role === 'super_admin') { %>
+                <button class="btn btn-primary rounded-pill px-4 shadow-sm" data-bs-toggle="collapse" data-bs-target="#addStaffForm">
+                    <i class="bi bi-person-plus me-2"></i>Add Staff Member
+                </button>
+                <% } %>
+            </div>
+
+            <% if (user.role === 'super_admin') { %>
+            <div class="collapse mb-5" id="addStaffForm">
+                <div class="card p-4 border-0 shadow-sm border-top border-4 border-primary glass-card">
+                    <h5 class="fw-bold mb-3">Create New Administrator</h5>
+                    <form action="/admin/staff/add" method="POST" class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">First Name</label>
+                            <input type="text" name="first_name" class="form-control bg-light border-0" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">Last Name</label>
+                            <input type="text" name="last_name" class="form-control bg-light border-0" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Email</label>
+                            <input type="email" name="email" class="form-control bg-light border-0" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">Role</label>
+                            <select name="role" class="form-select bg-light border-0" required>
+                                <option value="staff" selected>Staff / Examiner</option>
+                                <option value="admin">Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">Password</label>
+                            <input type="password" name="password" class="form-control bg-light border-0" required>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success w-100 shadow-sm"><i class="bi bi-check-lg"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <% } %>
+
+            <div class="card border-0 shadow-sm overflow-hidden rounded-4">
+                <table class="table mb-0 align-middle table-hover bg-white">
+                    <thead class="bg-light text-muted small">
+                        <tr>
+                            <th class="ps-4 py-3">STAFF MEMBER</th>
+                            <th>EMAIL</th>
+                            <th>ROLE</th>
+                            <th>STATUS</th>
+                            <th class="text-end pe-4">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% admins.forEach(admin => { %>
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark"><%= admin.username %></div>
+                                <small class="text-muted">ID: #<%= admin.user_id %></small>
+                            </td>
+                            <td><%= admin.email %></td>
+                            <td>
+                                <% if (admin.role === 'super_admin') { %>
+                                    <span class="badge bg-danger role-badge px-3 rounded-pill">Super Admin</span>
+                                <% } else if (admin.role === 'admin') { %>
+                                    <span class="badge bg-primary role-badge px-3 rounded-pill">Admin</span>
+                                <% } else { %>
+                                    <span class="badge bg-info text-dark role-badge px-3 rounded-pill">Staff</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <span class="badge <%= admin.is_active ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' %> px-3 rounded-pill">
+                                    <%= admin.is_active ? 'Active' : 'Inactive' %>
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <% if (user.role === 'super_admin') { %>
+                                    <div class="btn-group shadow-sm">
+                                        <a href="/admin/staff/toggle-status/<%= admin.user_id %>" 
+                                           class="btn btn-sm <%= admin.is_active ? 'btn-outline-danger' : 'btn-outline-success' %> px-3"
+                                           title="<%= admin.is_active ? 'Deactivate' : 'Activate' %> Account">
+                                            <i class="bi <%= admin.is_active ? 'bi-person-x' : 'bi-person-check' %>"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-white border px-3" title="Reset Password">
+                                            <i class="bi bi-key text-secondary"></i>
+                                        </button>
+                                    </div>
+                                <% } else { %>
+                                    <span class="text-muted x-small">No Permissions</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Alerts Logic
+    if (urlParams.get('error') === 'self_deactivate') {
+        Swal.fire({ icon: 'error', title: 'Access Denied', text: 'You cannot deactivate your own Super Admin account!' });
+    }
+    if (urlParams.get('error') === 'conflict') {
+        Swal.fire({ icon: 'warning', title: 'Conflict', text: 'Email or Username already exists.' });
+    }
+    if (urlParams.get('success') === 'status_updated') {
+        Swal.fire({ icon: 'success', title: 'Status Updated', timer: 1500, showConfirmButton: false });
+    }
+    if (urlParams.get('success') === 'added') {
+        Swal.fire({ icon: 'success', title: 'Staff Added', timer: 1500, showConfirmButton: false });
+    }
+</script>
+</body>
+</html>
