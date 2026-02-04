@@ -1,9 +1,0 @@
-Student side 
-email - student@pariksha.in
-password - 123456
-
-admin
-admin@test
-admin123
-
-Commit MessageSubject: Implement academic hierarchy and enhance Admin/User UXDescription:Academic Hierarchy: Added Course Management and updated Subjects to include academic years (FY, SY, TY).Dynamic UI: Implemented "chained dropdowns" for the Exam Management page using a new backend filtering API to ensure Course $\rightarrow$ Year $\rightarrow$ Subject consistency.Layout Stability: Fixed card "jumping" issues on centered layouts by switching to min-height and disabling SweetAlert2 heightAuto settings.Error Handling: Replaced blank-page errors during login with graceful SweetAlert2 notifications for invalid credentials or inactive accounts.Database Constraints: Updated Exam deletion logic to safely remove associated monitoring logs, results, and questions, preventing foreign key failures.UX Refinement: Added loading states to forms to prevent double-submissions and restored the missing "Edit Exam" modal functionality.Navigation: Updated Admin sidebar to include the new Course Management module.
