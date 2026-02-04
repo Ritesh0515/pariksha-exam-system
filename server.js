@@ -40,36 +40,56 @@ app.get('/login', (req, res) => {
 app.post('/login', async (req, res) => {
   const { email, password } = req.body
   try {
-    // We select the user where email matches AND the password matches after SHA2 encryption
     const [users] = await db.query(
       'SELECT * FROM users WHERE email = ? AND password_hash = SHA2(?, 256)',
       [email, password],
     )
 
     if (users.length > 0) {
-      // Check if the account is active before letting them in
       if (users[0].is_active === 0) {
-        return res.send('This account is inactive. Please contact support.')
+        return res.redirect('/login?error=inactive'); 
       }
-
-      req.session.user = users[0]
-
-      // Redirect based on role
-      if (users[0].role === 'admin') {
-        res.redirect('/admin/dashboard')
-      } else {
-        res.redirect('/student/dashboard')
-      }
+      req.session.user = users[0];
+      res.redirect(users[0].role === 'admin' ? '/admin/dashboard' : '/student/dashboard');
     } else {
-      // If the query returns nothing, the email or password was wrong
-      res.send("Invalid email or password. <a href='/login'>Try again</a>")
+      // Redirect back with an error flag instead of res.send()
+      res.redirect('/login?error=invalid'); 
     }
   } catch (err) {
-    console.error('Login Error:', err)
-    res.status(500).send('Database Error: ' + err.message)
+    res.redirect('/login?error=server');
   }
 })
+// --- STUDENT SIGNUP ---
 
+// Signup Page
+app.get('/signup', (req, res) => {
+  res.render('signup') // Ensure you have views/signup.ejs
+})
+
+// Handle Signup
+app.post('/signup', async (req, res) => {
+  const { first_name, last_name, email, roll_no, class_name, password } = req.body
+  const username = `${first_name} ${last_name}`;
+
+  try {
+    const [existing] = await db.query('SELECT user_id FROM users WHERE email = ?', [email])
+    if (existing.length > 0) {
+      return res.redirect('/signup?error=exists'); // Trigger warning popup
+    }
+
+    const sql = `
+      INSERT INTO users (username, first_name, last_name, email, password_hash, role, roll_no, class_name, is_active) 
+      VALUES (?, ?, ?, ?, SHA2(?, 256), 'student', ?, ?, 1)
+    `
+    await db.query(sql, [username, first_name, last_name, email, password, roll_no, class_name])
+
+    res.redirect('/login?registered=true'); // Trigger success popup
+
+  } catch (err) {
+    console.error('Signup Error:', err)
+    res.status(500).send('Registration failed: ' + err.message)
+  }
+})
 // --- ADMIN DASHBOARD ---
 app.get('/admin/dashboard', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin')
@@ -106,17 +126,35 @@ app.get('/admin/dashboard', async (req, res) => {
 
 
 // --- EXAM MANAGEMENT ---
+// --- EXAM MANAGEMENT ---
 app.get('/admin/exams', async (req, res) => {
+  // Security Check
+  if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+
   try {
-    const [subjects] = await db.query('SELECT * FROM subjects')
-    const [exams] = await db.query(
-      'SELECT e.*, s.subject_name FROM exams e JOIN subjects s ON e.subject_id = s.subject_id',
-    )
-    res.render('admin_exams', { user: req.session.user, subjects, exams })
+    // 1. Fetch all courses for the "Smart Selection" dropdown
+    const [courses] = await db.query('SELECT * FROM courses ORDER BY course_name ASC');
+
+    // 2. Fetch exams with subject, year, and course names for the table
+    const [exams] = await db.query(`
+      SELECT e.*, s.subject_name, s.year, c.course_name 
+      FROM exams e 
+      JOIN subjects s ON e.subject_id = s.subject_id
+      JOIN courses c ON s.course_id = c.course_id
+      ORDER BY e.exam_id DESC
+    `);
+
+    // 3. Render the page and pass BOTH variables
+    res.render('admin_exams', { 
+        user: req.session.user, 
+        courses: courses, // This fixes the "courses is not defined" error
+        exams: exams 
+    });
   } catch (err) {
-    res.status(500).send('Error loading exams')
+    console.error('Error loading exams:', err);
+    res.status(500).send('Error loading exams page');
   }
-})
+});
 
 app.post('/admin/exams/add', async (req, res) => {
   const { subject_id, exam_name, duration_minutes, total_marks, pass_marks } =
@@ -145,22 +183,39 @@ app.post('/admin/exams/update/:id', async (req, res) => {
   }
 })
 
-// DELETE EXAM
+// DELETE EXAM (Updated to clear all dependencies)
 app.get('/admin/exams/delete/:id', async (req, res) => {
-  try {
-    const id = req.params.id
-    // This SQL command removes the exam from your database
-    await db.query('DELETE FROM exams WHERE exam_id = ?', [id])
-    res.redirect('/admin/exams') // Go back to the list after deleting
-  } catch (err) {
-    console.error(err)
-    res
-      .status(500)
-      .send(
-        'Error: Could not delete the exam. Check if questions are still attached.',
-      )
-  }
-})
+    try {
+        const id = req.params.id;
+        // Clear all dependencies first
+        await db.query('DELETE FROM monitoring_logs WHERE exam_id = ?', [id]);
+        await db.query('DELETE FROM results WHERE exam_id = ?', [id]);
+        await db.query('DELETE FROM questions WHERE exam_id = ?', [id]);
+        await db.query('DELETE FROM exams WHERE exam_id = ?', [id]);
+        res.redirect('/admin/exams');
+    } catch (err) {
+        res.status(500).send('Database Error: ' + err.message);
+    }
+});
+
+// ==========================================
+// --- DYNAMIC FILTERING API ---
+// ==========================================
+
+// This route provides the data for your "Chained Dropdowns"
+app.get('/api/subjects-filter', async (req, res) => {
+    const { course_id, year } = req.query;
+    try {
+        const [subjects] = await db.query(
+            'SELECT subject_id, subject_name FROM subjects WHERE course_id = ? AND year = ?',
+            [course_id, year]
+        );
+        res.json(subjects);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch subjects" });
+    }
+});
+
 // --- QUESTION MANAGEMENT ---
 app.get('/admin/exams/:examId/questions', async (req, res) => {
   try {
@@ -283,31 +338,78 @@ app.post('/admin/questions/update/:examId/:questionId', async (req, res) => {
     }
 });
 
+// ==========================================
+// --- COURSE MANAGEMENT ---
+// ==========================================
+
+// 1. Get All Courses
+app.get('/admin/courses', async (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') return res.redirect('/login');
+    try {
+        const [courses] = await db.query('SELECT * FROM courses ORDER BY course_name ASC');
+        res.render('admin_courses', { user: req.session.user, courses, currentPage: 'courses' });
+    } catch (err) {
+        console.error("Course Load Error:", err);
+        res.status(500).send("Error loading courses");
+    }
+});
+
+// 2. Add New Course (BBA, BBA-CA, MBA, etc.)
+app.post('/admin/courses/add', async (req, res) => {
+    const { course_name } = req.body;
+    try {
+        await db.query('INSERT INTO courses (course_name) VALUES (?)', [course_name]);
+        res.redirect('/admin/courses');
+    } catch (err) {
+        console.error("Add Course Error:", err);
+        res.status(500).send("Error adding course. Ensure the name is unique.");
+    }
+});
+
+// 3. Delete Course
+app.get('/admin/courses/delete/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM courses WHERE course_id = ?', [req.params.id]);
+        res.redirect('/admin/courses');
+    } catch (err) {
+        res.status(500).send("Cannot delete course. It might have subjects linked to it.");
+    }
+});
+
 // --- SUBJECT MANAGEMENT ---
 app.get('/admin/subjects', async (req, res) => {
+  const selectedCourse = req.query.course || ''; // Catch the filter from the URL
   try {
-    const [courses] = await db.query('SELECT * FROM courses')
-    const [subjects] = await db.query(
-      'SELECT s.*, c.course_name FROM subjects s JOIN courses c ON s.course_id = c.course_id',
-    )
-    res.render('admin_subjects', { user: req.session.user, courses, subjects })
+    const [courses] = await db.query('SELECT * FROM courses');
+    
+    // Updated SQL to filter if a course is selected
+    let sql = 'SELECT s.*, c.course_name FROM subjects s JOIN courses c ON s.course_id = c.course_id';
+    let params = [];
+    
+    if (selectedCourse) {
+        sql += ' WHERE s.course_id = ?';
+        params.push(selectedCourse);
+    }
+
+    const [subjects] = await db.query(sql, params);
+    res.render('admin_subjects', { user: req.session.user, courses, subjects, selectedCourse });
   } catch (err) {
-    res.status(500).send('Error loading subjects')
+    res.status(500).send('Error loading subjects');
   }
-})
+});
 
 app.post('/admin/subjects/add', async (req, res) => {
-  const { subject_name, subject_code, course_id } = req.body
+  const { subject_name, subject_code, course_id, year } = req.body; // Catch the year
   try {
     await db.query(
-      'INSERT INTO subjects (subject_name, subject_code, course_id, created_by) VALUES (?, ?, ?, ?)',
-      [subject_name, subject_code, course_id, req.session.user.user_id],
-    )
-    res.redirect('/admin/subjects')
+      'INSERT INTO subjects (subject_name, subject_code, course_id, year, created_by) VALUES (?, ?, ?, ?, ?)',
+      [subject_name, subject_code, course_id, year, req.session.user.user_id]
+    );
+    res.redirect('/admin/subjects');
   } catch (err) {
-    res.status(500).send('Error adding subject')
+    res.status(500).send('Error adding subject');
   }
-})
+});
 
 // Route to handle updating a subject
 app.post('/admin/subjects/update/:id', async (req, res) => {

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/head') %>
+    <title>Student Registration | Pariksha</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
+            margin: 0;
+            padding: 20px 0;
+        }
+        .signup-card {
+            max-width: 500px;
+            width: 90%;
+            border-radius: 24px;
+            border: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .brand-logo {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #2563eb;
+            letter-spacing: -1.5px;
+        }
+        .form-control:focus {
+            background-color: #fff !important;
+            border: 1px solid #2563eb !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            border: none;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card signup-card p-4 p-md-5 bg-white">
+        <div class="text-center mb-4">
+            <div class="brand-logo mb-1">Join Pariksha</div>
+            <p class="text-muted small fw-medium">Create your student account</p>
+        </div>
+
+        <form action="/signup" method="POST" id="registrationForm">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small fw-bold">First Name</label>
+                    <input type="text" name="first_name" class="form-control bg-light border-0 py-2" placeholder="John" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small fw-bold">Last Name</label>
+                    <input type="text" name="last_name" class="form-control bg-light border-0 py-2" placeholder="Doe" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Email Address</label>
+                <input type="email" name="email" class="form-control bg-light border-0 py-2" placeholder="name@college.edu" required>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small fw-bold">Roll No.</label>
+                    <input type="text" name="roll_no" class="form-control bg-light border-0 py-2" placeholder="e.g. 69" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small fw-bold">Class</label>
+                    <input type="text" name="class_name" class="form-control bg-light border-0 py-2" placeholder="e.g. TYBBA-CA" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label small fw-bold">Create Password</label>
+                <input type="password" name="password" class="form-control bg-light border-0 py-2" placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" id="signupBtn" class="btn btn-primary w-100 py-3 fw-bold shadow-sm rounded-3">
+                <span id="btnText">Register Student</span>
+                <div id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></div>
+                <i id="btnIcon" class="bi bi-person-plus-fill ms-2"></i>
+            </button>
+        </form>
+
+        <div class="mt-4 text-center">
+            <p class="small text-muted mb-0">Already have an account? <a href="/login" class="text-primary fw-bold text-decoration-none">Sign In</a></p>
+        </div>
+    </div>
+
+
+
+    <script>
+        const signupForm = document.getElementById('registrationForm');
+        const signupBtn = document.getElementById('signupBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const btnIcon = document.getElementById('btnIcon');
+
+        // 1. Handle the Loading State on Submit
+        signupForm.addEventListener('submit', function() {
+            signupBtn.disabled = true; // Prevent multiple clicks
+            btnText.innerText = "Processing...";
+            btnSpinner.classList.remove('d-none');
+            btnIcon.classList.add('d-none');
+        });
+
+        // 2. Check for "User Already Registered" error
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('error') === 'exists') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Account Exists',
+                text: 'This email is already associated with an account. Please try logging in instead.',
+                confirmButtonColor: '#2563eb',
+                footer: '<a href="/login" style="color: #2563eb; text-decoration: none; font-weight: bold;">Go to Login Page</a>'
+            });
+            window.history.replaceState({}, document.title, "/signup");
+        }
+    </script>
+
+</body>
+</html>

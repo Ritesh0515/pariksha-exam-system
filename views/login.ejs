@@ -3,19 +3,19 @@
 <head>
     <%- include('partials/head') %>
     <title>Login | Pariksha</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Using a smooth gradient that matches the "Pariksha" blue theme */
             background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
             margin: 0;
         }
         .login-card {
             max-width: 400px;
-            width: 90%; /* Responsive for mobile */
+            width: 90%;
             border-radius: 24px;
             border: none;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -39,10 +39,6 @@
             background-color: #2563eb;
             border: none;
             transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            background-color: #1d4ed8;
-            transform: scale(1.02);
         }
     </style>
 </head>
@@ -84,27 +80,73 @@
             </button>
         </form>
 
-        <div class="mt-5 text-center">
-            <div class="border-top pt-3">
+        <div class="mt-4 text-center">
+            <p class="small text-muted">New student? <a href="/signup" class="text-primary fw-bold text-decoration-none">Register here</a></p>
+            <div class="border-top pt-3 mt-3">
                 <p class="small text-muted mb-0">Project Pariksha &copy; 2026</p>
             </div>
         </div>
     </div>
 
-    <script>
-        // Simple function to show or hide the password
-        function togglePassword() {
-            const input = document.getElementById('passwordInput');
-            const icon = document.getElementById('toggleIcon');
-            if (input.type === "password") {
-                input.type = "text";
-                icon.classList.replace('bi-eye', 'bi-eye-slash');
-            } else {
-                input.type = "password";
-                icon.classList.replace('bi-eye-slash', 'bi-eye');
-            }
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Handle Registration Success
+    if (urlParams.has('registered')) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Registration Successful!',
+            text: 'You can now log in with your credentials.',
+            confirmButtonColor: '#2563eb',
+            heightAuto: false, // Prevents background layout shift
+            timer: 4000,
+            timerProgressBar: true
+        });
+    }
+
+    // Handle Login Errors
+    if (urlParams.get('error') === 'invalid') {
+        Swal.fire({
+            icon: 'error',
+            title: 'Login Failed',
+            text: 'Invalid email or password. Please try again.',
+            confirmButtonColor: '#2563eb',
+            heightAuto: false // Prevents background layout shift
+        });
+    } else if (urlParams.get('error') === 'inactive') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Account Inactive',
+            text: 'Your account is currently disabled. Please contact the administrator.',
+            confirmButtonColor: '#2563eb',
+            heightAuto: false // Prevents background layout shift
+        });
+    } else if (urlParams.get('error') === 'server') {
+        Swal.fire({
+            icon: 'info',
+            title: 'System Error',
+            text: 'Something went wrong on our end. Please try again later.',
+            confirmButtonColor: '#2563eb',
+            heightAuto: false // Prevents background layout shift
+        });
+    }
+
+    // Clean the URL so the popup doesn't reappear on refresh
+    window.history.replaceState({}, document.title, "/login");
+
+    // Password Toggle Function
+    function togglePassword() {
+        const input = document.getElementById('passwordInput');
+        const icon = document.getElementById('toggleIcon');
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = "password";
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
         }
-    </script>
+    }
+</script>
 
 </body>
 </html>
