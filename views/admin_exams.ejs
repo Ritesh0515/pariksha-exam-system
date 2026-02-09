@@ -114,13 +114,13 @@
                                         <i class="bi bi-list-check text-primary"></i>
                                     </a>
                                     <button class="btn btn-sm btn-white border" title="Edit" 
-                                        onclick="openEditModal('<%= exam.exam_id %>', '<%= exam.exam_name %>', '<%= exam.duration_minutes %>', '<%= exam.pass_marks %>')">
+                                        onclick="openEditModal('<%= exam.exam_id %>', '<%= exam.exam_name %>', '<%= exam.duration_minutes %>', '<%= exam.total_marks %>', '<%= exam.pass_marks %>')">
                                         <i class="bi bi-pencil text-secondary"></i>
                                     </button>
-                                    <a href="/admin/exams/delete/<%= exam.exam_id %>" class="btn btn-sm btn-white border" title="Delete" 
-                                        onclick="return confirm('Permanently delete this exam?')">
+                                    <button class="btn btn-sm btn-white border" title="Delete" 
+                                        onclick="handleDelete('<%= exam.exam_id %>', '<%= user.role %>')">
                                         <i class="bi bi-trash text-danger"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -154,6 +154,10 @@
                             <label class="form-label small">Pass Marks</label>
                             <input type="number" name="pass_marks" id="edit_pass_marks" class="form-control bg-light border-0" required>
                         </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label small">Total Marks</label>
+                            <input type="number" name="total_marks" id="edit_total_marks" class="form-control bg-light border-0" required>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0">
@@ -164,60 +168,93 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // 1. Chained Dropdown Logic
     const courseSelect = document.getElementById('courseSelect');
     const yearSelect = document.getElementById('yearSelect');
     const subjectSelect = document.getElementById('subjectSelect');
 
-    // 1. Unlocks Year when Course is picked
-    courseSelect.addEventListener('change', () => {
-        yearSelect.disabled = false; // Removes the red circle from Year dropdown
-        yearSelect.value = ""; 
-        subjectSelect.disabled = true; // Subject stays locked until Year is selected
-        subjectSelect.innerHTML = '<option value="" selected disabled>Select Year first...</option>';
-    });
+    if (courseSelect) {
+        courseSelect.addEventListener('change', () => {
+            yearSelect.disabled = false;
+            yearSelect.value = ""; 
+            subjectSelect.disabled = true;
+            subjectSelect.innerHTML = '<option value="" selected disabled>Select Year first...</option>';
+        });
+    }
 
-    // 2. Fetches Subjects and Unlocks Subject dropdown
-    yearSelect.addEventListener('change', async () => {
-        const courseId = courseSelect.value;
-        const year = yearSelect.value;
+    if (yearSelect) {
+        yearSelect.addEventListener('change', async () => {
+            const courseId = courseSelect.value;
+            const year = yearSelect.value;
+            if (!courseId || !year) return;
+            try {
+                const response = await fetch(`/api/subjects-filter?course_id=${courseId}&year=${year}`);
+                const subjects = await response.json();
+                subjectSelect.innerHTML = '<option value="" selected disabled>Select Subject...</option>';
+                if (subjects.length > 0) {
+                    subjects.forEach(sub => {
+                        const opt = document.createElement('option');
+                        opt.value = sub.subject_id;
+                        opt.text = sub.subject_name;
+                        subjectSelect.add(opt);
+                    });
+                    subjectSelect.disabled = false;
+                } else {
+                    subjectSelect.innerHTML = '<option value="" selected disabled>No subjects found</option>';
+                }
+            } catch (err) { console.error("Fetch Error:", err); }
+        });
+    }
 
-        if (!courseId || !year) return;
-
-        try {
-            const response = await fetch(`/api/subjects-filter?course_id=${courseId}&year=${year}`);
-            const subjects = await response.json();
-
-            subjectSelect.innerHTML = '<option value="" selected disabled>Select Subject...</option>';
-            
-            if (subjects.length > 0) {
-                subjects.forEach(sub => {
-                    const opt = document.createElement('option');
-                    opt.value = sub.subject_id;
-                    opt.text = sub.subject_name;
-                    subjectSelect.add(opt);
-                });
-                subjectSelect.disabled = false; // Removes the red circle from Subject dropdown
-            } else {
-                subjectSelect.innerHTML = '<option value="" selected disabled>No subjects found for this year</option>';
-            }
-        } catch (err) {
-            console.error("Fetch Error:", err);
-        }
-    });
-
-    // 3. Fixes the Edit Modal (restoring the missing function)
-    function openEditModal(id, name, duration, pass) {
+    // 2. Edit Modal Logic
+    function openEditModal(id, name, duration, total, pass) {
         document.getElementById('edit_exam_name').value = name;
         document.getElementById('edit_duration').value = duration;
+        document.getElementById('edit_total_marks').value = total; 
         document.getElementById('edit_pass_marks').value = pass;
         document.getElementById('editExamForm').action = '/admin/exams/update/' + id;
         
-        // Show the modal using Bootstrap global
         const myModal = new bootstrap.Modal(document.getElementById('editExamModal'));
         myModal.show();
     }
+
+    // 3. Smart Deletion Logic (Frontend Guard)
+    function handleDelete(examId, userRole) {
+        if (userRole === 'staff') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Permission Denied',
+                text: 'As a Staff member, you do not have authority to delete exams. Please contact an Admin.',
+                confirmButtonColor: '#3085d6'
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This will remove the exam and its questions, but student results will be preserved.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/admin/exams/delete/' + examId;
+            }
+        });
+    }
+
+    // 4. Success Alert Handling
+    if (urlParams.get('success') === 'deleted') {
+        Swal.fire({ icon: 'success', title: 'Deleted!', text: 'The exam was removed successfully.', timer: 2000, showConfirmButton: false });
+    }
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

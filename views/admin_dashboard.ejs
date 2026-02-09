@@ -37,7 +37,7 @@
                 </div>
                 <div class="dropdown">
                     <button class="btn bg-white shadow-sm rounded-pill px-4 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle me-2 text-primary"></i> <%= user.role.toUpperCase() %>
+                        <i class="bi bi-person-circle me-2 text-primary"></i> <%= user.role.replace('_', ' ').toUpperCase() %>
                     </button>
                     <ul class="dropdown-menu border-0 shadow">
                         <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
