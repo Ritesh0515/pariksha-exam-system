@@ -209,19 +209,26 @@ app.post('/admin/exams/update/:id', async (req, res) => {
 
 // DELETE EXAM (Updated to clear all dependencies)
 app.get('/admin/exams/delete/:id', async (req, res) => {
+  // Security: Only Admins and Super Admins can delete
+  const role = req.session.user.role
+
+  if (role !== 'super_admin' && role !== 'admin') {
+    // Redirect back with an error code instead of showing a white page
+    return res.redirect('/admin/exams?error=unauthorized')
+  }
+
   try {
     const id = req.params.id
-    // Clear all dependencies first
+    // We removed the line that deletes results to keep your data safe!
     await db.query('DELETE FROM monitoring_logs WHERE exam_id = ?', [id])
-    await db.query('DELETE FROM results WHERE exam_id = ?', [id])
     await db.query('DELETE FROM questions WHERE exam_id = ?', [id])
     await db.query('DELETE FROM exams WHERE exam_id = ?', [id])
-    res.redirect('/admin/exams')
+
+    res.redirect('/admin/exams?success=deleted')
   } catch (err) {
     res.status(500).send('Database Error: ' + err.message)
   }
 })
-
 // ==========================================
 // --- DYNAMIC FILTERING API ---
 // ==========================================
@@ -410,6 +417,7 @@ app.get('/admin/courses', async (req, res) => {
 
 // 2. Add New Course (BBA, BBA-CA, MBA, etc.)
 app.post('/admin/courses/add', async (req, res) => {
+    if (req.session.user.role === 'staff') return res.status(403).send("Unauthorized: Staff cannot add courses.");
   const { course_name } = req.body
   try {
     await db.query('INSERT INTO courses (course_name) VALUES (?)', [
@@ -424,6 +432,7 @@ app.post('/admin/courses/add', async (req, res) => {
 
 // 3. Delete Course
 app.get('/admin/courses/delete/:id', async (req, res) => {
+    if (req.session.user.role === 'staff') return res.status(403).send("Unauthorized: Staff cannot delete courses.");
   try {
     await db.query('DELETE FROM courses WHERE course_id = ?', [req.params.id])
     res.redirect('/admin/courses')
@@ -440,15 +449,15 @@ app.get('/admin/courses/delete/:id', async (req, res) => {
 
 // 1. List all Admin staff
 app.get('/admin/staff', async (req, res) => {
-  // Only logged-in admins can access this page
   if (!req.session.user || !isAdmin(req.session.user.role))
     return res.redirect('/login')
 
   try {
-    // Fetch specific columns for security (never fetch raw password_hash here)
+    // Change this line to include all administrative roles
     const [admins] = await db.query(
-      "SELECT user_id, username, email, is_active FROM users WHERE role = 'admin'",
+      "SELECT user_id, username, email, role, is_active FROM users WHERE role IN ('super_admin', 'admin', 'staff')",
     )
+
     res.render('admin_staff', {
       user: req.session.user,
       admins,
@@ -542,6 +551,9 @@ app.get('/admin/subjects', async (req, res) => {
 })
 
 app.post('/admin/subjects/add', async (req, res) => {
+  if (!req.session.user || req.session.user.role === 'staff') {
+    return res.status(403).send('Unauthorized: Staff cannot add subjects.')
+  }
   const { subject_name, subject_code, course_id, year } = req.body // Catch the year
   try {
     await db.query(
@@ -556,19 +568,29 @@ app.post('/admin/subjects/add', async (req, res) => {
 
 // Route to handle updating a subject
 app.post('/admin/subjects/update/:id', async (req, res) => {
-  const { subject_name, subject_code, course_id } = req.body
+  if (!req.session.user || req.session.user.role === 'staff') {
+    return res.status(403).send('Unauthorized: Staff cannot edit subjects.')
+  }
+  if (!req.session.user || !isAdmin(req.session.user.role))
+    return res.redirect('/login')
+
+  const { subject_name, subject_code, course_id, year } = req.body // Added year
   try {
     await db.query(
-      'UPDATE subjects SET subject_name=?, subject_code=?, course_id=? WHERE subject_id=?',
-      [subject_name, subject_code, course_id, req.params.id],
+      'UPDATE subjects SET subject_name=?, subject_code=?, course_id=?, year=? WHERE subject_id=?',
+      [subject_name, subject_code, course_id, year, req.params.id], // Added year to SQL
     )
     res.redirect('/admin/subjects')
   } catch (err) {
-    res.status(500).send('Error updating subject: ' + err.message)
+    console.error('Subject Update Error:', err)
+    res.status(500).send('Error updating subject')
   }
 })
 
 app.get('/admin/subjects/delete/:id', async (req, res) => {
+  if (!req.session.user || req.session.user.role === 'staff') {
+    return res.status(403).send('Unauthorized: Staff cannot delete subjects.')
+  }
   try {
     await db.query('DELETE FROM subjects WHERE subject_id = ?', [req.params.id])
     res.redirect('/admin/subjects')
