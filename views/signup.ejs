@@ -1,44 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <%- include('partials/head') %>
-    <title>Student Registration | Pariksha</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
-            margin: 0;
-            padding: 20px 0;
-        }
-        .signup-card {
-            max-width: 500px;
-            width: 90%;
-            border-radius: 24px;
-            border: none;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-        .brand-logo {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: #2563eb;
-            letter-spacing: -1.5px;
-        }
-        .form-control:focus {
-            background-color: #fff !important;
-            border: 1px solid #2563eb !important;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-        }
-        .btn-primary {
-            background-color: #2563eb;
-            border: none;
-            transition: all 0.3s ease;
-        }
-    </style>
+        <title>Student Registration | Pariksha</title>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <style>
+            body {
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
+                margin: 0;
+                padding: 20px 0;
+            }
+
+            .signup-card {
+                max-width: 500px;
+                width: 90%;
+                border-radius: 24px;
+                border: none;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            }
+
+            .brand-logo {
+                font-size: 2.2rem;
+                font-weight: 800;
+                color: #2563eb;
+                letter-spacing: -1.5px;
+            }
+
+            .form-control:focus,
+            .form-select:focus {
+                background-color: #fff !important;
+                border: 1px solid #2563eb !important;
+                box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            }
+
+            .btn-primary {
+                background-color: #2563eb;
+                border: none;
+                transition: all 0.3s ease;
+            }
+
+            /* Style for the select dropdown to match your inputs */
+            .form-select {
+                cursor: pointer;
+            }
+        </style>
 </head>
+
 <body>
 
     <div class="card signup-card p-4 p-md-5 bg-white">
@@ -50,36 +62,79 @@
         <form action="/signup" method="POST" id="registrationForm">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label small fw-bold">First Name</label>
-                    <input type="text" name="first_name" class="form-control bg-light border-0 py-2" placeholder="John" required>
+                    <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">First
+                        Name</label>
+                    <input type="text" name="first_name" class="form-control bg-light border-0 py-2" placeholder="John"
+                        required>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label small fw-bold">Last Name</label>
-                    <input type="text" name="last_name" class="form-control bg-light border-0 py-2" placeholder="Doe" required>
+                    <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Last
+                        Name</label>
+                    <input type="text" name="last_name" class="form-control bg-light border-0 py-2" placeholder="Doe"
+                        required>
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label small fw-bold">Email Address</label>
-                <input type="email" name="email" class="form-control bg-light border-0 py-2" placeholder="name@college.edu" required>
+                <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Email
+                    Address</label>
+                <input type="email" name="email" class="form-control bg-light border-0 py-2"
+                    placeholder="name@college.edu" required>
             </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label small fw-bold">Roll No.</label>
-                    <input type="text" name="roll_no" class="form-control bg-light border-0 py-2" placeholder="e.g. 69" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label small fw-bold">Class</label>
-                    <input type="text" name="class_name" class="form-control bg-light border-0 py-2" placeholder="e.g. TYBBA-CA" required>
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Select Course /
+                    Class</label>
+                <select name="class_name" class="form-select bg-light border-0 py-2" required>
+                    <option value="" selected disabled>Choose your academic department...</option>
+                    <% if (courses && courses.length> 0) { %>
+                        <% courses.forEach(course=> { %>
+                            <option value="<%= course.course_name %>">
+                                <%= course.course_name %>
+                            </option>
+                            <% }) %>
+                                <% } else { %>
+                                    <option disabled>No courses available. Contact Admin.</option>
+                                    <% } %>
+                </select>
+                <div class="form-text x-small text-muted">Pick the course you are currently enrolled in.</div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Academic
+                    Year</label>
+                <div class="border rounded p-3 bg-light">
+                    <div class="row">
+                        <div class="col-4 text-center">
+                            <div class="form-check d-flex justify-content-center align-items-center">
+                                <input class="form-check-input" type="radio" name="year_code" id="fy" value="FY" checked
+                                    required>
+                                <label class="form-check-label ms-2" for="fy">FY (First Year)</label>
+                            </div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="form-check d-flex justify-content-center align-items-center">
+                                <input class="form-check-input" type="radio" name="year_code" id="sy" value="SY">
+                                <label class="form-check-label ms-2" for="sy">SY (Second Year)</label>
+                            </div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="form-check d-flex justify-content-center align-items-center">
+                                <input class="form-check-input" type="radio" name="year_code" id="ty" value="TY">
+                                <label class="form-check-label ms-2" for="ty">TY (Third Year)</label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="mb-4">
-                <label class="form-label small fw-bold">Create Password</label>
-                <input type="password" name="password" class="form-control bg-light border-0 py-2" placeholder="••••••••" required>
+                <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Create
+                    Password</label>
+                <input type="password" name="password" class="form-control bg-light border-0 py-2"
+                    placeholder="••••••••" required>
             </div>
-            
+
             <button type="submit" id="signupBtn" class="btn btn-primary w-100 py-3 fw-bold shadow-sm rounded-3">
                 <span id="btnText">Register Student</span>
                 <div id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></div>
@@ -88,11 +143,10 @@
         </form>
 
         <div class="mt-4 text-center">
-            <p class="small text-muted mb-0">Already have an account? <a href="/login" class="text-primary fw-bold text-decoration-none">Sign In</a></p>
+            <p class="small text-muted mb-0">Already have an account? <a href="/login"
+                    class="text-primary fw-bold text-decoration-none">Sign In</a></p>
         </div>
     </div>
-
-
 
     <script>
         const signupForm = document.getElementById('registrationForm');
@@ -101,15 +155,15 @@
         const btnSpinner = document.getElementById('btnSpinner');
         const btnIcon = document.getElementById('btnIcon');
 
-        // 1. Handle the Loading State on Submit
-        signupForm.addEventListener('submit', function() {
-            signupBtn.disabled = true; // Prevent multiple clicks
+        // Handle the Loading State on Submit
+        signupForm.addEventListener('submit', function () {
+            signupBtn.disabled = true;
             btnText.innerText = "Processing...";
             btnSpinner.classList.remove('d-none');
             btnIcon.classList.add('d-none');
         });
 
-        // 2. Check for "User Already Registered" error
+        // Error Handling for duplicate emails
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('error') === 'exists') {
             Swal.fire({
@@ -124,4 +178,5 @@
     </script>
 
 </body>
+
 </html>

@@ -1,122 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <%- include('partials/head') %>
     <title>Exam Results | Pariksha Admin</title>
     <style>
-        .table thead th { 
-            font-size: 0.85rem; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
-            color: #64748b; 
+        .table thead th {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
             background-color: #f8fafc;
         }
-        .avatar-circle { 
-            width: 38px; 
-            height: 38px; 
-            background: #eff6ff; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border-radius: 10px; 
-            color: #2563eb; 
+
+        .avatar-circle {
+            width: 42px;
+            height: 42px;
+            background: #eff6ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            color: #2563eb;
             font-weight: 700;
             border: 1px solid #dbeafe;
         }
-        .score-text {
-            font-size: 1.1rem;
-            color: #1e293b;
+
+        .drill-down-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .drill-down-card:hover {
+            transform: translateY(-5px);
+            border-color: #2563eb;
+            box-shadow: 0 12px 20px -5px rgba(37, 99, 235, 0.15);
+        }
+
+        .breadcrumb-item a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
         }
     </style>
 </head>
+
 <body class="bg-light">
-<div class="container-fluid">
-    <div class="row">
-        <%- include('partials/sidebar', {currentPage: 'results'}) %>
+    <input type="hidden" id="rawResults" value='<%- JSON.stringify(results) %>'>
+    <input type="hidden" id="rawCourses" value='<%- JSON.stringify(courses) %>'>
 
-        <div class="col-md-10 offset-md-2 p-5">
-            <div class="mb-5">
-                <h2 class="fw-bold text-dark mb-1">Student Performance</h2>
-                <p class="text-muted mb-0">Review all completed exam attempts and grades.</p>
-            </div>
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('partials/sidebar', {currentPage: 'results' }) %>
 
-            <div class="card border-0 shadow-sm overflow-hidden rounded-4">
-                <table class="table mb-0 align-middle table-hover bg-white">
-                    <thead>
-                        <tr>
-                            <th class="ps-4 py-3 border-0">Student</th>
-                            <th class="border-0">Class/Course</th>
-                            <th class="border-0">Exam Title</th>
-                            <th class="border-0">Total Score</th>
-                            <th class="border-0">Submission Date</th>
-                            <th class="text-end pe-4 border-0">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="border-top-0">
-                        <% if (results.length === 0) { %>
-                            <tr>
-                                <td colspan="6" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="bi bi-clipboard-x display-6"></i>
-                                        <p class="mt-2">No results recorded yet.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        <% } %>
-                        
-                        <% results.forEach(r => { %>
-                        <tr>
-                            <td class="ps-4 py-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-circle me-3">
-                                        <%= r.first_name.charAt(0) %><%= r.last_name.charAt(0) %>
-                                    </div>
-                                    <div>
-                                        <div class="fw-bold text-dark"><%= r.first_name %> <%= r.last_name %></div>
-                                        <div class="small text-muted">Roll No: <%= r.roll_no || 'N/A' %></div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="text-dark fw-medium"><%= r.class_name || '—' %></span>
-                            </td>
-                            <td>
-                                <div class="fw-semibold text-primary"><%= r.exam_name %></div>
-                            </td>
-                            <td>
-                                <div class="score-text fw-bold">
-                                    <%= r.score %> <span class="text-muted fw-normal" style="font-size: 0.9rem;">/ <%= r.total_questions %></span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="small text-dark">
-                                    <i class="bi bi-calendar-event me-1 text-muted"></i>
-                                    <%= new Date(r.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %>
-                                </div>
-                                <div class="text-muted" style="font-size: 0.75rem;">
-                                    <i class="bi bi-clock me-1"></i>
-                                    <%= new Date(r.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
-                                </div>
-                            </td>
-                            <td class="text-end pe-4">
-                                <% if (r.status === 'PASSED') { %>
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle rounded-pill px-3 py-2">
-                                        <i class="bi bi-check-circle-fill me-1"></i> PASSED
-                                    </span>
-                                <% } else { %>
-                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle rounded-pill px-3 py-2">
-                                        <i class="bi bi-x-circle-fill me-1"></i> FAILED
-                                    </span>
-                                <% } %>
-                            </td>
-                        </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
+            <div class="col-md-10 offset-md-2 p-5">
+                <div class="d-flex justify-content-between align-items-end mb-4">
+                    <div>
+                        <h2 class="fw-bold text-dark mb-1">Student Performance</h2>
+                        <p class="text-muted mb-0">Navigate through courses to view specific mark sheets.</p>
+                    </div>
+                </div>
+
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb bg-white p-3 rounded-4 shadow-sm border" id="resultsBreadcrumb">
+                        <li class="breadcrumb-item active" aria-current="page">Results</li>
+                    </ol>
+                </nav>
+
+                <div id="courseView" class="row g-4"></div>
+
+                <div id="yearView" class="d-none">
+                    <div class="text-center mb-5">
+                        <h4 class="fw-bold text-dark">Select Academic Year</h4>
+                        <button class="btn btn-sm btn-link text-muted" onclick="showCourseView()">
+                            <i class="bi bi-arrow-left"></i> Switch Course
+                        </button>
+                    </div>
+                    <div id="yearButtons" class="row g-3 justify-content-center"></div>
+                </div>
+
+                <div id="examView" class="d-none">
+                    <div class="text-center mb-5">
+                        <h4 class="fw-bold text-dark">Select Exam Paper</h4>
+                        <button class="btn btn-sm btn-link text-muted" onclick="showYearView()">
+                            <i class="bi bi-arrow-left"></i> Switch Year
+                        </button>
+                    </div>
+                    <div id="examList" class="row g-4 justify-content-center"></div>
+                </div>
+
+                <div id="resultView" class="d-none">
+                    <div class="card border-0 shadow-sm overflow-hidden rounded-4">
+                        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold mb-0" id="tableTitle">Students Marksheet</h5>
+                            <button class="btn btn-sm btn-primary rounded-pill px-3" onclick="window.print()">
+                                <i class="bi bi-printer me-1"></i> Print
+                            </button>
+                        </div>
+                        <table class="table mb-0 align-middle table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4 py-3 border-0">Student Details</th>
+                                    <th class="border-0 text-center">Marks Obtained</th>
+                                    <th class="border-0">Submission Time</th>
+                                    <th class="text-end pe-4 border-0">Result Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultTableBody" class="border-top-0"></tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Parse data from hidden fields (standard JS, no EJS tags here to confuse the editor)
+        const resultsData = JSON.parse(document.getElementById('rawResults').value || "[]");
+        const coursesData = JSON.parse(document.getElementById('rawCourses').value || "[]");
+
+        let selectedCourse = null;
+        let selectedYear = null;
+        let selectedExam = null;
+
+        // Navigation Controllers
+        function updateBreadcrumb() {
+            const b = document.getElementById('resultsBreadcrumb');
+            let h = `<li class="breadcrumb-item"><a href="#" onclick="showCourseView()">Results</a></li>`;
+            if (selectedCourse) h += `<li class="breadcrumb-item text-primary fw-medium">${selectedCourse}</li>`;
+            if (selectedYear) h += `<li class="breadcrumb-item text-primary fw-medium">${selectedYear}</li>`;
+            if (selectedExam) h += `<li class="breadcrumb-item active fw-bold">${selectedExam}</li>`;
+            b.innerHTML = h;
+        }
+
+        function hideAll() {
+            ['courseView', 'yearView', 'examView', 'resultView'].forEach(id => {
+                document.getElementById(id).classList.add('d-none');
+            });
+        }
+
+        // STEP 1: RENDER COURSES (Always shows based on Courses table)
+        function showCourseView() {
+            hideAll();
+            document.getElementById('courseView').classList.remove('d-none');
+            renderCourseCards();
+            selectedCourse = null; selectedYear = null; selectedExam = null;
+            updateBreadcrumb();
+        }
+
+        function renderCourseCards() {
+            const container = document.getElementById('courseView');
+            container.innerHTML = '';
+            coursesData.forEach(c => {
+                const col = document.createElement('div');
+                col.className = 'col-md-4';
+                col.innerHTML = `
+                    <div class="card drill-down-card border-0 shadow-sm rounded-4 p-4 text-center" onclick="selectCourse('${c.course_name}')">
+                        <div class="avatar-circle mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            ${c.course_name.charAt(0)}
+                        </div>
+                        <h5 class="fw-bold mb-1">${c.course_name}</h5>
+                        <p class="text-muted small mb-0">View Academic Years</p>
+                    </div>`;
+                container.appendChild(col);
+            });
+        }
+
+        // STEP 2: RENDER YEARS
+        function selectCourse(course) {
+            selectedCourse = course;
+            showYearView();
+        }
+
+        function showYearView() {
+            hideAll();
+            document.getElementById('yearView').classList.remove('d-none');
+            renderYearButtons();
+            selectedYear = null; selectedExam = null;
+            updateBreadcrumb();
+        }
+
+        function renderYearButtons() {
+            const years = ['FY', 'SY', 'TY'];
+            const container = document.getElementById('yearButtons');
+            container.innerHTML = '';
+            years.forEach(y => {
+                const col = document.createElement('div');
+                col.className = 'col-md-3';
+                col.innerHTML = `<button class="btn btn-white border shadow-sm w-100 py-3 fw-bold rounded-4" onclick="selectYear('${y}')">${y}</button>`;
+                container.appendChild(col);
+            });
+        }
+
+        // STEP 3: RENDER EXAMS (Filters from Results data)
+        function selectYear(year) {
+            selectedYear = year;
+            showExamView();
+        }
+
+        function showExamView() {
+            hideAll();
+            document.getElementById('examView').classList.remove('d-none');
+            renderExamList();
+            selectedExam = null;
+            updateBreadcrumb();
+        }
+
+        function renderExamList() {
+            // Find unique exams that actually have results for this Course + Year
+            const exams = [...new Set(resultsData
+                .filter(r => r.class_name === selectedCourse && r.year_code === selectedYear)
+                .map(r => r.exam_name))];
+            
+            const container = document.getElementById('examList');
+            container.innerHTML = '';
+            
+            if (exams.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-folder-x display-4 text-muted opacity-50"></i>
+                        <p class="text-muted mt-3">No exam results found for ${selectedCourse} ${selectedYear}.</p>
+                    </div>`;
+                return;
+            }
+
+            exams.forEach(e => {
+                const col = document.createElement('div');
+                col.className = 'col-md-4';
+                const safeExam = e.replace(/'/g, "\\'");
+                col.innerHTML = `
+                    <div class="card drill-down-card border-0 shadow-sm rounded-4 p-4 d-flex flex-row align-items-center" onclick="selectExam('${safeExam}')">
+                        <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3 me-3">
+                            <i class="bi bi-file-earmark-text fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold mb-0">${e}</h6>
+                    </div>`;
+                container.appendChild(col);
+            });
+        }
+
+        // STEP 4: RENDER FINAL TABLE
+        function selectExam(exam) {
+            selectedExam = exam;
+            showResultView();
+        }
+
+        function showResultView() {
+            hideAll();
+            document.getElementById('resultView').classList.remove('d-none');
+            renderResultTable();
+            updateBreadcrumb();
+        }
+
+        function renderResultTable() {
+            const rows = resultsData.filter(r => 
+                r.class_name === selectedCourse && 
+                r.year_code === selectedYear && 
+                r.exam_name === selectedExam
+            );
+            const body = document.getElementById('resultTableBody');
+            body.innerHTML = '';
+            
+            rows.forEach(r => {
+                const badgeClass = r.status === 'PASSED' ? 'bg-success' : 'bg-danger';
+                const subDate = new Date(r.submitted_at);
+                
+                body.innerHTML += `
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle me-3">${r.first_name.charAt(0)}${r.last_name.charAt(0)}</div>
+                                <div>
+                                    <div class="fw-bold text-dark">${r.first_name} ${r.last_name}</div>
+                                    <div class="small text-muted">Roll No: ${r.roll_no || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="fs-5 fw-bold text-dark">${r.score} <span class="text-muted fw-normal small">/ ${r.total_questions}</span></div>
+                        </td>
+                        <td>
+                            <div class="small fw-medium">${subDate.toLocaleDateString()}</div>
+                            <div class="text-muted small">${subDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                        </td>
+                        <td class="text-end pe-4">
+                            <span class="badge ${badgeClass} bg-opacity-10 text-${badgeClass.split('-')[1]} border rounded-pill px-3 py-2">
+                                ${r.status}
+                            </span>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        // Initial Launch
+        showCourseView();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

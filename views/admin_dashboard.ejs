@@ -4,7 +4,6 @@
     <%- include('partials/head') %>
     <title>Dashboard | Pariksha Admin</title>
     <style>
-        /* Small styling additions to match your theme */
         .glass-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
@@ -19,6 +18,14 @@
         .quick-action-btn:hover {
             background-color: #f8f9fa !important;
             padding-left: 2rem !important;
+        }
+        .notification-item {
+            border-left: 4px solid #2563eb;
+            background-color: #f8fafc;
+            transition: background-color 0.2s;
+        }
+        .notification-item:hover {
+            background-color: #f1f5f9;
         }
     </style>
 </head>
@@ -47,34 +54,71 @@
 
             <div class="row mb-5">
                 <div class="col-md-3">
-                    <div class="card glass-card p-4 border-0 border-start border-4 border-primary shadow-sm">
+                    <div class="card glass-card p-4 border-0 border-start border-4 border-primary shadow-sm h-100">
                         <div class="text-muted small fw-bold text-uppercase">Total Exams</div>
                         <h2 class="fw-bold mt-2"><%= stats.exams %></h2>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card glass-card p-4 border-0 border-start border-4 border-success shadow-sm">
+                    <div class="card glass-card p-4 border-0 border-start border-4 border-success shadow-sm h-100">
                         <div class="text-muted small fw-bold text-uppercase">Students Enrolled</div>
                         <h2 class="fw-bold mt-2"><%= stats.students %></h2>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card glass-card p-4 border-0 border-start border-4 border-warning shadow-sm">
+                    <div class="card glass-card p-4 border-0 border-start border-4 border-warning shadow-sm h-100">
                         <div class="text-muted small fw-bold text-uppercase">Total Subjects</div>
                         <h2 class="fw-bold mt-2"><%= stats.subjects %></h2>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card glass-card p-4 border-0 border-start border-4 border-danger shadow-sm">
-                        <div class="text-muted small fw-bold text-uppercase">Avg. Score</div>
-                        <h2 class="fw-bold mt-2">N/A</h2>
+                    <div class="card glass-card p-4 border-0 border-start border-4 border-danger shadow-sm h-100">
+                        <div class="text-muted small fw-bold text-uppercase">New Registrations</div>
+                        <h2 class="fw-bold mt-2"><%= notifications.length %></h2>
                     </div>
                 </div>
             </div>
 
             <div class="row">
                 <div class="col-md-8">
-                    <div class="card glass-card p-4 h-100 shadow-sm border-0">
+                    
+                    <div class="card glass-card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-bell-fill me-2 text-primary"></i>Pending Actions</h5>
+                            <% if (notifications.length > 0) { %>
+                                <span class="badge bg-danger rounded-pill"><%= notifications.length %> Required</span>
+                            <% } %>
+                        </div>
+                        <div class="card-body p-0">
+                            <ul class="list-group list-group-flush">
+                                <% if (notifications.length === 0) { %>
+                                    <li class="list-group-item py-5 text-center text-muted border-0">
+                                        <i class="bi bi-check2-all display-6 d-block mb-2 opacity-25"></i>
+                                        All students have been processed!
+                                    </li>
+                                <% } else { %>
+                                    <% notifications.forEach(note => { %>
+                                        <li class="list-group-item p-3 notification-item border-bottom">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="pe-3">
+                                                    <p class="mb-1 text-dark fw-medium"><%= note.message %></p>
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-clock me-1"></i> 
+                                                        <%= new Date(note.created_at).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }) %>
+                                                    </small>
+                                                </div>
+                                                <a href="/admin/notifications/read/<%= note.id %>" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm flex-shrink-0">
+                                                    Assign Now
+                                                </a>
+                                            </div>
+                                        </li>
+                                    <% }) %>
+                                <% } %>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card glass-card p-4 shadow-sm border-0">
                         <h5 class="fw-bold mb-4"><i class="bi bi-clock-history me-2"></i>Recent Activity (New Subjects)</h5>
                         <ul class="list-group list-group-flush">
                             <% if (activities.length > 0) { %>
@@ -107,6 +151,9 @@
                             </a>
                             <a href="/admin/subjects" class="btn btn-light text-primary fw-bold text-start p-3 shadow-sm quick-action-btn">
                                 <i class="bi bi-folder-plus me-2"></i> Add New Subject
+                            </a>
+                            <a href="/admin/students" class="btn btn-light text-primary fw-bold text-start p-3 shadow-sm quick-action-btn">
+                                <i class="bi bi-people-fill me-2"></i> Manage Students
                             </a>
                             <a href="/admin/results" class="btn btn-light text-primary fw-bold text-start p-3 shadow-sm quick-action-btn">
                                 <i class="bi bi-bar-chart-fill me-2"></i> View All Results

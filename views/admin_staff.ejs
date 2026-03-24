@@ -19,17 +19,17 @@
                     <h2 class="fw-bold text-dark mb-0">Staff Management</h2>
                     <p class="text-muted small">Manage roles and account status for your team.</p>
                 </div>
-                <% if (user.role === 'super_admin') { %>
+                <% if (user.role === 'admin') { %>
                 <button class="btn btn-primary rounded-pill px-4 shadow-sm" data-bs-toggle="collapse" data-bs-target="#addStaffForm">
                     <i class="bi bi-person-plus me-2"></i>Add Staff Member
                 </button>
                 <% } %>
             </div>
 
-            <% if (user.role === 'super_admin') { %>
+            <% if (user.role === 'admin') { %>
             <div class="collapse mb-5" id="addStaffForm">
                 <div class="card p-4 border-0 shadow-sm border-top border-4 border-primary glass-card">
-                    <h5 class="fw-bold mb-3">Create New Administrator</h5>
+                    <h5 class="fw-bold mb-3">Create New Staff Member</h5>
                     <form action="/admin/staff/add" method="POST" class="row g-3">
                         <div class="col-md-2">
                             <label class="form-label small fw-bold">First Name</label>
@@ -48,7 +48,6 @@
                             <select name="role" class="form-select bg-light border-0" required>
                                 <option value="staff" selected>Staff / Examiner</option>
                                 <option value="admin">Admin</option>
-                                <option value="super_admin">Super Admin</option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -83,9 +82,7 @@
                             </td>
                             <td><%= admin.email %></td>
                             <td>
-                                <% if (admin.role === 'super_admin') { %>
-                                    <span class="badge bg-danger role-badge px-3 rounded-pill">Super Admin</span>
-                                <% } else if (admin.role === 'admin') { %>
+                                <% if (admin.role === 'admin') { %>
                                     <span class="badge bg-primary role-badge px-3 rounded-pill">Admin</span>
                                 <% } else { %>
                                     <span class="badge bg-info text-dark role-badge px-3 rounded-pill">Staff</span>
@@ -97,19 +94,17 @@
                                 </span>
                             </td>
                             <td class="text-end pe-4">
-                                <% if (user.role === 'super_admin') { %>
+                                <% if (user.role === 'admin') { %>
                                     <div class="btn-group shadow-sm">
                                         <a href="/admin/staff/toggle-status/<%= admin.user_id %>" 
                                            class="btn btn-sm <%= admin.is_active ? 'btn-outline-danger' : 'btn-outline-success' %> px-3"
                                            title="<%= admin.is_active ? 'Deactivate' : 'Activate' %> Account">
                                             <i class="bi <%= admin.is_active ? 'bi-person-x' : 'bi-person-check' %>"></i>
                                         </a>
-                                        <button class="btn btn-sm btn-white border px-3" title="Reset Password">
-                                            <i class="bi bi-key text-secondary"></i>
-                                        </button>
+                                        
                                     </div>
                                 <% } else { %>
-                                    <span class="text-muted x-small">No Permissions</span>
+                                    <span class="text-muted x-small italic">View Only</span>
                                 <% } %>
                             </td>
                         </tr>
@@ -127,9 +122,8 @@
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     
-    // Alerts Logic
     if (urlParams.get('error') === 'self_deactivate') {
-        Swal.fire({ icon: 'error', title: 'Access Denied', text: 'You cannot deactivate your own Super Admin account!' });
+        Swal.fire({ icon: 'error', title: 'Action Denied', text: 'You cannot deactivate your own Admin account!' });
     }
     if (urlParams.get('error') === 'conflict') {
         Swal.fire({ icon: 'warning', title: 'Conflict', text: 'Email or Username already exists.' });

@@ -5,6 +5,21 @@ const multer = require('multer')
 const csv = require('csv-parser')
 const fs = require('fs')
 const upload = multer({ dest: 'uploads/' })
+
+// Profile Picture Upload Configuration
+const profilePicStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = 'public/uploads/profile_pics/'
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
+    cb(null, dir)
+  },
+  filename: function (req, file, cb) {
+    cb(null, 'profile-' + req.session.user.user_id + '.jpg')
+  },
+})
+const uploadProfilePic = multer({ storage: profilePicStorage })
 require('dotenv').config()
 
 const app = express()
@@ -25,7 +40,7 @@ app.use(
 )
 
 // Helper: Check for any Administrative/Staff privilege
-const isAdmin = (role) => ['super_admin', 'admin', 'staff'].includes(role)
+const isAdmin = (role) => ['admin', 'staff'].includes(role)
 
 // 3. ROUTES
 
@@ -73,78 +88,96 @@ app.post('/login', async (req, res) => {
 // --- STUDENT SIGNUP ---
 
 // Signup Page
-app.get('/signup', (req, res) => {
-  res.render('signup') // Ensure you have views/signup.ejs
+// Updated Signup Route to fetch courses
+app.get('/signup', async (req, res) => {
+  try {
+    const [courses] = await db.query(
+      'SELECT course_name FROM courses ORDER BY course_name ASC',
+    )
+    res.render('signup', { courses: courses }) // Pass the courses to the EJS file
+  } catch (err) {
+    console.error('Error fetching courses for signup:', err)
+    res.render('signup', { courses: [] }) // Fallback to empty list if error
+  }
 })
-
 // Handle Signup
 app.post('/signup', async (req, res) => {
-  const { first_name, last_name, email, roll_no, class_name, password } =
-    req.body
-  const username = `${first_name} ${last_name}`
+    const { first_name, last_name, email, class_name, password, year_code } = req.body;
+    const username = `${first_name} ${last_name}`;
 
-  try {
-    const [existing] = await db.query(
-      'SELECT user_id FROM users WHERE email = ?',
-      [email],
-    )
-    if (existing.length > 0) {
-      return res.redirect('/signup?error=exists') // Trigger warning popup
+    try {
+        const [existing] = await db.query(
+            'SELECT user_id FROM users WHERE email = ?',
+            [email],
+        );
+        if (existing.length > 0) return res.redirect('/signup?error=exists');
+
+        const sql = `
+            INSERT INTO users (username, first_name, last_name, email, password_hash, role, class_name, year_code, is_active) 
+            VALUES (?, ?, ?, ?, SHA2(?, 256), 'student', ?, ?, 1)
+        `;
+
+        // Capture the result to get the new student's ID
+        const [result] = await db.query(sql, [
+            username,
+            first_name,
+            last_name,
+            email,
+            password,
+            class_name,
+            year_code,
+        ]);
+
+        // --- NEW: CREATE NOTIFICATION FOR ADMIN ---
+        const newStudentId = result.insertId;
+        const adminMessage = `New student ${first_name} ${last_name} has registered under the course ${class_name} (${year_code}). Action: Assign Roll Number.`;
+        
+        await db.query("INSERT INTO notifications (user_id, message) VALUES (?, ?)", [
+            newStudentId, 
+            adminMessage
+        ]);
+
+        res.redirect('/login?registered=true');
+    } catch (err) {
+        console.error('Signup Error:', err);
+        res.status(500).send('Registration failed');
     }
-
-    const sql = `
-      INSERT INTO users (username, first_name, last_name, email, password_hash, role, roll_no, class_name, is_active) 
-      VALUES (?, ?, ?, ?, SHA2(?, 256), 'student', ?, ?, 1)
-    `
-    await db.query(sql, [
-      username,
-      first_name,
-      last_name,
-      email,
-      password,
-      roll_no,
-      class_name,
-    ])
-
-    res.redirect('/login?registered=true') // Trigger success popup
-  } catch (err) {
-    console.error('Signup Error:', err)
-    res.status(500).send('Registration failed: ' + err.message)
-  }
-})
+});
 // --- ADMIN DASHBOARD ---
 app.get('/admin/dashboard', async (req, res) => {
-  if (!req.session.user || !isAdmin(req.session.user.role))
-    return res.redirect('/login')
+    if (!req.session.user || !isAdmin(req.session.user.role))
+        return res.redirect('/login');
 
-  try {
-    const [[{ examCount }]] = await db.query(
-      'SELECT COUNT(*) as examCount FROM exams',
-    )
-    const [[{ subjectCount }]] = await db.query(
-      'SELECT COUNT(*) as subjectCount FROM subjects',
-    )
-    const [[{ studentCount }]] = await db.query(
-      "SELECT COUNT(*) as studentCount FROM users WHERE role = 'student'",
-    )
-    const [recentSubjects] = await db.query(
-      'SELECT subject_name FROM subjects ORDER BY subject_id DESC LIMIT 5',
-    )
+    try {
+        const [[{ examCount }]] = await db.query('SELECT COUNT(*) as examCount FROM exams');
+        const [[{ subjectCount }]] = await db.query('SELECT COUNT(*) as subjectCount FROM subjects');
+        const [[{ studentCount }]] = await db.query("SELECT COUNT(*) as studentCount FROM users WHERE role = 'student'");
+        
+        const [recentSubjects] = await db.query(
+            'SELECT subject_name FROM subjects ORDER BY subject_id DESC LIMIT 5'
+        );
 
-    res.render('admin_dashboard', {
-      user: req.session.user,
-      stats: {
-        exams: examCount || 0,
-        subjects: subjectCount || 0,
-        students: studentCount || 0,
-      },
-      activities: recentSubjects,
-      currentPage: 'dashboard',
-    })
-  } catch (err) {
-    res.status(500).send('Dashboard Error')
-  }
-})
+        // --- NEW: FETCH UNREAD NOTIFICATIONS ---
+        const [notifications] = await db.query(
+            "SELECT * FROM notifications WHERE is_read = 0 ORDER BY created_at DESC"
+        );
+
+        res.render('admin_dashboard', {
+            user: req.session.user,
+            stats: {
+                exams: examCount || 0,
+                subjects: subjectCount || 0,
+                students: studentCount || 0,
+            },
+            activities: recentSubjects,
+            notifications: notifications, // Pass notifications to the EJS
+            currentPage: 'dashboard',
+        });
+    } catch (err) {
+        console.error('Dashboard Error:', err);
+        res.status(500).send('Dashboard Error');
+    }
+});
 
 // --- EXAM MANAGEMENT ---
 // --- EXAM MANAGEMENT ---
@@ -210,9 +243,7 @@ app.post('/admin/exams/update/:id', async (req, res) => {
 // DELETE EXAM (Updated to clear all dependencies)
 app.get('/admin/exams/delete/:id', async (req, res) => {
   // Security: Only Admins and Super Admins can delete
-  const role = req.session.user.role
-
-  if (role !== 'super_admin' && role !== 'admin') {
+  if (!req.session.user || req.session.user.role !== 'admin') {
     // Redirect back with an error code instead of showing a white page
     return res.redirect('/admin/exams?error=unauthorized')
   }
@@ -417,7 +448,8 @@ app.get('/admin/courses', async (req, res) => {
 
 // 2. Add New Course (BBA, BBA-CA, MBA, etc.)
 app.post('/admin/courses/add', async (req, res) => {
-    if (req.session.user.role === 'staff') return res.status(403).send("Unauthorized: Staff cannot add courses.");
+  if (req.session.user.role === 'staff')
+    return res.status(403).send('Unauthorized: Staff cannot add courses.')
   const { course_name } = req.body
   try {
     await db.query('INSERT INTO courses (course_name) VALUES (?)', [
@@ -432,7 +464,8 @@ app.post('/admin/courses/add', async (req, res) => {
 
 // 3. Delete Course
 app.get('/admin/courses/delete/:id', async (req, res) => {
-    if (req.session.user.role === 'staff') return res.status(403).send("Unauthorized: Staff cannot delete courses.");
+  if (req.session.user.role === 'staff')
+    return res.status(403).send('Unauthorized: Staff cannot delete courses.')
   try {
     await db.query('DELETE FROM courses WHERE course_id = ?', [req.params.id])
     res.redirect('/admin/courses')
@@ -495,7 +528,7 @@ app.post('/admin/staff/add', async (req, res) => {
 // Toggle Staff Active Status
 app.get('/admin/staff/toggle-status/:id', async (req, res) => {
   // Only Super Admins should be able to disable other staff
-  if (!req.session.user || req.session.user.role !== 'super_admin') {
+  if (!req.session.user || req.session.user.role !== 'admin') {
     return res
       .status(403)
       .send('Unauthorized: Only Super Admins can manage staff status.')
@@ -611,19 +644,25 @@ app.get('/admin/results', async (req, res) => {
   }
 
   try {
-    // 2. Fetch the results joined with academic details (Roll No & Class)
+    // 2. Fetch the results with academic details (Roll No, Class, Year) using user join
     const [allResults] = await db.query(`
-            SELECT r.*, u.first_name, u.last_name, u.roll_no, u.class_name, e.exam_name 
+            SELECT r.*, u.first_name, u.last_name, u.roll_no, u.class_name, u.year_code, e.exam_name 
             FROM results r
             JOIN users u ON r.user_id = u.user_id
             JOIN exams e ON r.exam_id = e.exam_id
             ORDER BY r.submitted_at DESC
         `)
 
-    // 3. Render the page and send the data
+    // 3. Fetch course list for drill-down course cards
+    const [courses] = await db.query(
+      'SELECT * FROM courses ORDER BY course_name ASC',
+    )
+
+    // 4. Render the page and send both result and course data
     res.render('admin_results', {
       user: req.session.user,
       results: allResults,
+      courses: courses,
       currentPage: 'results',
     })
   } catch (err) {
@@ -638,28 +677,69 @@ app.get('/admin/results', async (req, res) => {
 
 // Student Dashboard - Show available exams
 app.get('/student/dashboard', async (req, res) => {
-  if (!req.session.user || req.session.user.role !== 'student') {
-    return res.redirect('/login')
-  }
+    if (!req.session.user || req.session.user.role !== 'student') return res.redirect('/login');
 
-  try {
-    // Fetch all exams joined with their subject names
-    const [exams] = await db.query(`
+    try {
+        const userId = req.session.user.user_id;
+        
+        // 1. Get the latest student info (Course/Year)
+        const [[user]] = await db.query(
+            "SELECT first_name, last_name, class_name, year_code, profile_pic FROM users WHERE user_id = ?", 
+            [userId]
+        );
+
+        // 2. Fetch exams ONLY if they belong to this student's Course and Year
+        const [exams] = await db.query(`
             SELECT e.*, s.subject_name 
             FROM exams e 
             JOIN subjects s ON e.subject_id = s.subject_id
-        `)
+            JOIN courses c ON s.course_id = c.course_id
+            WHERE c.course_name = ? AND s.year = ?
+        `, [user.class_name, user.year_code]);
 
-    res.render('student_dashboard', {
-      user: req.session.user,
-      exams: exams,
-      activeExamId: req.session.currentExamId || null,
-    })
-  } catch (err) {
-    console.error('Student Dashboard SQL Error:', err)
-    res.status(500).send('Error loading student dashboard: ' + err.message)
-  }
-})
+        res.render('student_dashboard', {
+            user: user,
+            exams: exams,
+            activeExamId: req.session.currentExamId || null
+        });
+    } catch (err) {
+        console.error("Dashboard Error:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+// Handle student profile photo upload
+app.post(
+  '/student/upload-profile',
+  uploadProfilePic.single('profile_pic'),
+  async (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'student') {
+      return res.redirect('/login')
+    }
+
+    try {
+      const studentId = req.session.user.user_id
+      const profilePicFileName = req.file ? req.file.filename : null
+
+      if (!profilePicFileName) {
+        return res.redirect('/student/dashboard?error=no_file')
+      }
+
+      await db.query('UPDATE users SET profile_pic = ? WHERE user_id = ?', [
+        profilePicFileName,
+        studentId,
+      ])
+
+      // Refresh session so UI can immediately reflect uploaded image
+      req.session.user.profile_pic = profilePicFileName
+
+      res.redirect('/student/dashboard?success=profile_updated')
+    } catch (err) {
+      console.error('Profile Upload Error:', err)
+      res.status(500).send('Error uploading profile picture')
+    }
+  },
+)
 
 // Route to show instructions before starting
 app.get('/student/exam/:examId/start', async (req, res) => {
@@ -866,6 +946,96 @@ app.get('/student/exam/quit', (req, res) => {
   delete req.session.examEndTime
   delete req.session.currentExamId
   res.redirect('/student/dashboard')
+})
+
+// --- STUDENT MANAGEMENT (New Page for Teacher) ---
+
+// --- NOTIFICATION MANAGEMENT ---
+// This route marks a notification as read and takes the admin to the student list
+app.get('/admin/notifications/read/:id', async (req, res) => {
+    // Security check
+    if (!req.session.user || !isAdmin(req.session.user.role)) {
+        return res.redirect('/login');
+    }
+
+    try {
+        const noteId = req.params.id;
+        
+        // 1. Mark the notification as 'read' so it disappears from the dashboard
+        await db.query("UPDATE notifications SET is_read = 1 WHERE id = ?", [noteId]);
+        
+        // 2. Redirect to the students management page to assign the roll number
+        res.redirect('/admin/students');
+    } catch (err) {
+        console.error('Error clearing notification:', err);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// 1. Show the list of students
+app.get('/admin/students', async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.redirect('/login')
+  }
+  try {
+    const [courses] = await db.query(
+      'SELECT * FROM courses ORDER BY course_name ASC',
+    )
+    const [students] = await db.query(
+      "SELECT user_id, first_name, last_name, roll_no, email, class_name, year_code, is_active FROM users WHERE role = 'student' ORDER BY class_name, year_code, roll_no ASC",
+    )
+    res.render('admin_students', {
+      user: req.session.user,
+      students,
+      courses,
+      currentPage: 'students',
+    })
+  } catch (err) {
+    res.status(500).send('Error loading students')
+  }
+})
+
+// 2. Save the updated Student Information
+app.post('/admin/students/update-roll/:id', async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin')
+    return res.status(403).send('Unauthorized')
+
+  const { course, year, roll_no } = req.body
+  const studentId = req.params.id
+
+  try {
+    // Update the student's course, year, and roll number
+    await db.query(
+      'UPDATE users SET class_name = ?, year_code = ?, roll_no = ? WHERE user_id = ?',
+      [course, year, roll_no, studentId],
+    )
+    res.redirect('/admin/students?success=student_updated')
+  } catch (err) {
+    console.error('Student Update Error:', err)
+    if (err.code === 'ER_DUP_ENTRY') {
+      // Duplicate roll number error
+      res.redirect('/admin/students?error=already_taken')
+    } else {
+      // Generic error
+      res.status(500).send('Error updating student information')
+    }
+  }
+})
+
+// Toggle Student Eligibility (Active/Inactive)
+app.get('/admin/students/toggle-status/:id', async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin')
+    return res.redirect('/login')
+  try {
+    await db.query(
+      "UPDATE users SET is_active = NOT is_active WHERE user_id = ? AND role = 'student'",
+      [req.params.id],
+    )
+    res.redirect('/admin/students?success=status_updated')
+  } catch (err) {
+    console.error('Toggle Error:', err)
+    res.status(500).send('Error updating student status')
+  }
 })
 
 app.listen(3000, () => {
