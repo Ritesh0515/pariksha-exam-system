@@ -4,58 +4,74 @@
     <%- include('partials/head') %>
     <title>Manage Staff | Pariksha Admin</title>
     <style>
-        .role-badge { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .glass-card { transition: all 0.3s ease; }
+        .role-badge { 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+        }
+        .glass-card { transition: all 0.3s ease; border-radius: 12px; }
+        
+        .theme-border-top {
+            border-top: 4px solid var(--primary-blue) !important;
+        }
+        
+        /* Themed badges for roles */
+        .badge-admin { background-color: var(--primary-blue); color: white; }
+        .badge-staff { background-color: #E0E7FF; color: var(--primary-blue); }
     </style>
 </head>
 <body class="bg-light">
-<div class="container-fluid">
-    <div class="row">
+
+<div class="container-fluid px-0">
+    <div class="row g-0">
         <%- include('partials/sidebar', {currentPage: 'staff'}) %>
 
-        <div class="col-md-10 offset-md-2 p-5">
+        <div class="col-12 col-md-10 offset-md-2 p-3 p-md-5">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 class="fw-bold text-dark mb-0">Staff Management</h2>
-                    <p class="text-muted small">Manage roles and account status for your team.</p>
+                    <h2 class="fw-bold text-dark mb-1">Staff Management</h2>
+                    <p class="text-muted small mb-0">Manage roles and account status for your team.</p>
                 </div>
-                <% if (user.role === 'admin') { %>
-                <button class="btn btn-primary rounded-pill px-4 shadow-sm" data-bs-toggle="collapse" data-bs-target="#addStaffForm">
+                <% if (user && user.role === 'admin') { %>
+                <button class="btn btn-primary rounded-pill px-4 shadow-sm" style="background-color: var(--primary-blue); border: none;" data-bs-toggle="collapse" data-bs-target="#addStaffForm">
                     <i class="bi bi-person-plus me-2"></i>Add Staff Member
                 </button>
                 <% } %>
             </div>
 
-            <% if (user.role === 'admin') { %>
+            <% if (user && user.role === 'admin') { %>
             <div class="collapse mb-5" id="addStaffForm">
-                <div class="card p-4 border-0 shadow-sm border-top border-4 border-primary glass-card">
-                    <h5 class="fw-bold mb-3">Create New Staff Member</h5>
+                <div class="card p-4 border-0 shadow-sm theme-border-top glass-card">
+                    <h5 class="fw-bold mb-3 text-dark">Create New Staff Member</h5>
                     <form action="/admin/staff/add" method="POST" class="row g-3">
                         <div class="col-md-2">
-                            <label class="form-label small fw-bold">First Name</label>
-                            <input type="text" name="first_name" class="form-control bg-light border-0" required>
+                            <label class="form-label small fw-bold text-muted">First Name</label>
+                            <input type="text" name="first_name" class="form-control bg-light border-0 p-2" required>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small fw-bold">Last Name</label>
-                            <input type="text" name="last_name" class="form-control bg-light border-0" required>
+                            <label class="form-label small fw-bold text-muted">Last Name</label>
+                            <input type="text" name="last_name" class="form-control bg-light border-0 p-2" required>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small fw-bold">Email</label>
-                            <input type="email" name="email" class="form-control bg-light border-0" required>
+                            <label class="form-label small fw-bold text-muted">Email</label>
+                            <input type="email" name="email" class="form-control bg-light border-0 p-2" required>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small fw-bold">Role</label>
-                            <select name="role" class="form-select bg-light border-0" required>
+                            <label class="form-label small fw-bold text-muted">Role</label>
+                            <select name="role" class="form-select bg-light border-0 p-2" required>
                                 <option value="staff" selected>Staff / Examiner</option>
                                 <option value="admin">Admin</option>
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small fw-bold">Password</label>
-                            <input type="password" name="password" class="form-control bg-light border-0" required>
+                            <label class="form-label small fw-bold text-muted">Password</label>
+                            <input type="password" name="password" class="form-control bg-light border-0 p-2" required>
                         </div>
                         <div class="col-md-1 d-flex align-items-end">
-                            <button type="submit" class="btn btn-success w-100 shadow-sm"><i class="bi bi-check-lg"></i></button>
+                            <button type="submit" class="btn btn-primary w-100 shadow-sm p-2 rounded-3" style="background-color: var(--primary-blue); border: none;" title="Save Staff">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -63,55 +79,58 @@
             <% } %>
 
             <div class="card border-0 shadow-sm overflow-hidden rounded-4">
-                <table class="table mb-0 align-middle table-hover bg-white">
-                    <thead class="bg-light text-muted small">
-                        <tr>
-                            <th class="ps-4 py-3">STAFF MEMBER</th>
-                            <th>EMAIL</th>
-                            <th>ROLE</th>
-                            <th>STATUS</th>
-                            <th class="text-end pe-4">ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% admins.forEach(admin => { %>
-                        <tr>
-                            <td class="ps-4">
-                                <div class="fw-bold text-dark"><%= admin.username %></div>
-                                <small class="text-muted">ID: #<%= admin.user_id %></small>
-                            </td>
-                            <td><%= admin.email %></td>
-                            <td>
-                                <% if (admin.role === 'admin') { %>
-                                    <span class="badge bg-primary role-badge px-3 rounded-pill">Admin</span>
-                                <% } else { %>
-                                    <span class="badge bg-info text-dark role-badge px-3 rounded-pill">Staff</span>
-                                <% } %>
-                            </td>
-                            <td>
-                                <span class="badge <%= admin.is_active ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' %> px-3 rounded-pill">
-                                    <%= admin.is_active ? 'Active' : 'Inactive' %>
-                                </span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <% if (user.role === 'admin') { %>
-                                    <div class="btn-group shadow-sm">
-                                        <a href="/admin/staff/toggle-status/<%= admin.user_id %>" 
-                                           class="btn btn-sm <%= admin.is_active ? 'btn-outline-danger' : 'btn-outline-success' %> px-3"
-                                           title="<%= admin.is_active ? 'Deactivate' : 'Activate' %> Account">
-                                            <i class="bi <%= admin.is_active ? 'bi-person-x' : 'bi-person-check' %>"></i>
-                                        </a>
-                                        
-                                    </div>
-                                <% } else { %>
-                                    <span class="text-muted x-small italic">View Only</span>
-                                <% } %>
-                            </td>
-                        </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle table-hover bg-white">
+                        <thead class="bg-light text-muted small text-uppercase fw-semibold">
+                            <tr>
+                                <th class="ps-4 py-3">Staff Member</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% admins.forEach(admin => { %>
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark"><%= admin.username %></div>
+                                    <small class="text-muted">ID: #<%= admin.user_id %></small>
+                                </td>
+                                <td class="text-muted"><%= admin.email %></td>
+                                <td>
+                                    <% if (admin.role === 'admin') { %>
+                                        <span class="badge badge-admin role-badge px-3 py-2 rounded-pill">Admin</span>
+                                    <% } else { %>
+                                        <span class="badge badge-staff role-badge px-3 py-2 rounded-pill">Staff</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <span class="badge <%= admin.is_active ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' %> px-3 py-2 rounded-pill fw-medium">
+                                        <i class="bi <%= admin.is_active ? 'bi-check-circle-fill' : 'bi-x-circle-fill' %> me-1"></i>
+                                        <%= admin.is_active ? 'Active' : 'Inactive' %>
+                                    </span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <% if (user && user.role === 'admin') { %>
+                                        <div class="btn-group shadow-sm rounded-3 overflow-hidden">
+                                            <a href="/admin/staff/toggle-status/<%= admin.user_id %>" 
+                                               class="btn btn-sm <%= admin.is_active ? 'btn-light text-danger' : 'btn-light text-success' %> border px-3"
+                                               title="<%= admin.is_active ? 'Deactivate' : 'Activate' %> Account">
+                                                <i class="bi <%= admin.is_active ? 'bi-person-x-fill' : 'bi-person-check-fill' %>"></i>
+                                            </a>
+                                        </div>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2">View Only</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
             </div>
+            
         </div>
     </div>
 </div>
@@ -123,10 +142,20 @@
     const urlParams = new URLSearchParams(window.location.search);
     
     if (urlParams.get('error') === 'self_deactivate') {
-        Swal.fire({ icon: 'error', title: 'Action Denied', text: 'You cannot deactivate your own Admin account!' });
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'Action Denied', 
+            text: 'You cannot deactivate your own Admin account!',
+            confirmButtonColor: '#1E3A8A' // Theme matched
+        });
     }
     if (urlParams.get('error') === 'conflict') {
-        Swal.fire({ icon: 'warning', title: 'Conflict', text: 'Email or Username already exists.' });
+        Swal.fire({ 
+            icon: 'warning', 
+            title: 'Conflict', 
+            text: 'Email or Username already exists.',
+            confirmButtonColor: '#1E3A8A' // Theme matched
+        });
     }
     if (urlParams.get('success') === 'status_updated') {
         Swal.fire({ icon: 'success', title: 'Status Updated', timer: 1500, showConfirmButton: false });

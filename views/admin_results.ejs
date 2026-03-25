@@ -13,17 +13,18 @@
             background-color: #f8fafc;
         }
 
+        /* Themed Avatar Circle */
         .avatar-circle {
             width: 42px;
             height: 42px;
-            background: #eff6ff;
+            background: #E0E7FF;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 12px;
-            color: #2563eb;
+            color: var(--primary-blue);
             font-weight: 700;
-            border: 1px solid #dbeafe;
+            border: 1px solid #c7d2fe;
         }
 
         .drill-down-card {
@@ -33,29 +34,45 @@
             background: white;
         }
 
+        /* Themed Hover Effect */
         .drill-down-card:hover {
             transform: translateY(-5px);
-            border-color: #2563eb;
-            box-shadow: 0 12px 20px -5px rgba(37, 99, 235, 0.15);
+            border-color: var(--primary-blue);
+            box-shadow: 0 12px 20px -5px rgba(30, 58, 138, 0.15);
         }
 
+        /* Themed Breadcrumbs */
         .breadcrumb-item a {
-            color: #2563eb;
+            color: var(--primary-blue);
             text-decoration: none;
             font-weight: 500;
+        }
+
+        /* Print formatting */
+        @media print {
+            .sidebar, .breadcrumb, button, .text-muted.mb-0 {
+                display: none !important;
+            }
+            .offset-md-2 {
+                margin-left: 0 !important;
+            }
+            .col-md-10 {
+                width: 100% !important;
+            }
+            .card { border: none !important; box-shadow: none !important; }
         }
     </style>
 </head>
 
 <body class="bg-light">
-    <input type="hidden" id="rawResults" value='<%- JSON.stringify(results) %>'>
-    <input type="hidden" id="rawCourses" value='<%- JSON.stringify(courses) %>'>
+    <input type="hidden" id="rawResults" value='<%- JSON.stringify(results).replace(/'/g, "\\'") %>'>
+    <input type="hidden" id="rawCourses" value='<%- JSON.stringify(courses).replace(/'/g, "\\'") %>'>
 
-    <div class="container-fluid">
-        <div class="row">
+    <div class="container-fluid px-0">
+        <div class="row g-0">
             <%- include('partials/sidebar', {currentPage: 'results' }) %>
 
-            <div class="col-md-10 offset-md-2 p-5">
+            <div class="col-12 col-md-10 offset-md-2 p-3 p-md-5">
                 <div class="d-flex justify-content-between align-items-end mb-4">
                     <div>
                         <h2 class="fw-bold text-dark mb-1">Student Performance</h2>
@@ -95,21 +112,23 @@
                     <div class="card border-0 shadow-sm overflow-hidden rounded-4">
                         <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                             <h5 class="fw-bold mb-0" id="tableTitle">Students Marksheet</h5>
-                            <button class="btn btn-sm btn-primary rounded-pill px-3" onclick="window.print()">
+                            <button class="btn btn-sm btn-primary rounded-pill px-3" style="background-color: var(--primary-blue);" onclick="window.print()">
                                 <i class="bi bi-printer me-1"></i> Print
                             </button>
                         </div>
-                        <table class="table mb-0 align-middle table-hover">
-                            <thead>
-                                <tr>
-                                    <th class="ps-4 py-3 border-0">Student Details</th>
-                                    <th class="border-0 text-center">Marks Obtained</th>
-                                    <th class="border-0">Submission Time</th>
-                                    <th class="text-end pe-4 border-0">Result Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resultTableBody" class="border-top-0"></tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table mb-0 align-middle table-hover">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4 py-3 border-0">Student Details</th>
+                                        <th class="border-0 text-center">Marks Obtained</th>
+                                        <th class="border-0">Submission Time</th>
+                                        <th class="text-end pe-4 border-0">Result Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultTableBody" class="border-top-0"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -118,7 +137,7 @@
     </div>
 
     <script>
-        // Parse data from hidden fields (standard JS, no EJS tags here to confuse the editor)
+        // Data is now safely escaped above
         const resultsData = JSON.parse(document.getElementById('rawResults').value || "[]");
         const coursesData = JSON.parse(document.getElementById('rawCourses').value || "[]");
 
@@ -129,9 +148,10 @@
         // Navigation Controllers
         function updateBreadcrumb() {
             const b = document.getElementById('resultsBreadcrumb');
-            let h = `<li class="breadcrumb-item"><a href="#" onclick="showCourseView()">Results</a></li>`;
-            if (selectedCourse) h += `<li class="breadcrumb-item text-primary fw-medium">${selectedCourse}</li>`;
-            if (selectedYear) h += `<li class="breadcrumb-item text-primary fw-medium">${selectedYear}</li>`;
+            // Hardcoded color var to ensure it matches theme
+            let h = `<li class="breadcrumb-item"><a href="#" onclick="showCourseView()" style="color: var(--primary-blue);">Results</a></li>`;
+            if (selectedCourse) h += `<li class="breadcrumb-item fw-medium" style="color: var(--primary-blue);">${selectedCourse}</li>`;
+            if (selectedYear) h += `<li class="breadcrumb-item fw-medium" style="color: var(--primary-blue);">${selectedYear}</li>`;
             if (selectedExam) h += `<li class="breadcrumb-item active fw-bold">${selectedExam}</li>`;
             b.innerHTML = h;
         }
@@ -142,7 +162,7 @@
             });
         }
 
-        // STEP 1: RENDER COURSES (Always shows based on Courses table)
+        // STEP 1: RENDER COURSES
         function showCourseView() {
             hideAll();
             document.getElementById('courseView').classList.remove('d-none');
@@ -151,7 +171,7 @@
             updateBreadcrumb();
         }
 
-        function renderCourseCards() {
+      function renderCourseCards() {
             const container = document.getElementById('courseView');
             container.innerHTML = '';
             coursesData.forEach(c => {
@@ -159,10 +179,10 @@
                 col.className = 'col-md-4';
                 col.innerHTML = `
                     <div class="card drill-down-card border-0 shadow-sm rounded-4 p-4 text-center" onclick="selectCourse('${c.course_name}')">
-                        <div class="avatar-circle mx-auto mb-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
-                            ${c.course_name.charAt(0)}
+                        <div class="avatar-circle mx-auto mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-mortarboard fs-3"></i>
                         </div>
-                        <h5 class="fw-bold mb-1">${c.course_name}</h5>
+                        <h5 class="fw-bold mb-1 text-dark">${c.course_name}</h5>
                         <p class="text-muted small mb-0">View Academic Years</p>
                     </div>`;
                 container.appendChild(col);
@@ -190,12 +210,13 @@
             years.forEach(y => {
                 const col = document.createElement('div');
                 col.className = 'col-md-3';
-                col.innerHTML = `<button class="btn btn-white border shadow-sm w-100 py-3 fw-bold rounded-4" onclick="selectYear('${y}')">${y}</button>`;
+                // Added hover transition classes for polish
+                col.innerHTML = `<button class="btn btn-white border shadow-sm w-100 py-3 fw-bold rounded-4 transition" onclick="selectYear('${y}')">${y}</button>`;
                 container.appendChild(col);
             });
         }
 
-        // STEP 3: RENDER EXAMS (Filters from Results data)
+        // STEP 3: RENDER EXAMS
         function selectYear(year) {
             selectedYear = year;
             showExamView();
@@ -210,7 +231,6 @@
         }
 
         function renderExamList() {
-            // Find unique exams that actually have results for this Course + Year
             const exams = [...new Set(resultsData
                 .filter(r => r.class_name === selectedCourse && r.year_code === selectedYear)
                 .map(r => r.exam_name))];
@@ -233,10 +253,10 @@
                 const safeExam = e.replace(/'/g, "\\'");
                 col.innerHTML = `
                     <div class="card drill-down-card border-0 shadow-sm rounded-4 p-4 d-flex flex-row align-items-center" onclick="selectExam('${safeExam}')">
-                        <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3 me-3">
-                            <i class="bi bi-file-earmark-text fs-4"></i>
+                        <div class="p-3 rounded-3 me-3 d-flex align-items-center justify-content-center" style="background-color: #E0E7FF; color: var(--primary-blue); width: 48px; height: 48px;">
+                            <i class="bi bi-file-earmark-text fs-5"></i>
                         </div>
-                        <h6 class="fw-bold mb-0">${e}</h6>
+                        <h6 class="fw-bold mb-0 text-dark">${e}</h6>
                     </div>`;
                 container.appendChild(col);
             });
@@ -295,11 +315,8 @@
             });
         }
 
-        // Initial Launch
         showCourseView();
     </script>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

@@ -4,10 +4,16 @@
     <%- include('partials/head') %>
     <title>My History | Pariksha</title>
     <style>
+        :root {
+            --primary-blue: #1E3A8A;
+            --primary-hover: #172e6e;
+        }
+
+        /* Updated to support both Image and Initials */
         .profile-avatar {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            width: 85px;
+            height: 85px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #2a52be 100%);
             color: white;
             display: flex;
             align-items: center;
@@ -15,32 +21,50 @@
             font-size: 1.8rem;
             font-weight: 800;
             border-radius: 20px;
-            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+            box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.2);
+            border: 3px solid white;
         }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 17px; /* Matches container rounding slightly inward */
+        }
+
         .history-table thead th {
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #64748b;
             border-top: none;
+            background-color: #f8fafc;
         }
+
         .status-badge-pass { background-color: #f0fdf4; color: #16a34a; border: 1px solid #bcf0da; }
         .status-badge-fail { background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        
         .score-box { font-size: 1.1rem; color: #1e293b; }
+        
+        /* Themed Navbar */
+        .student-navbar {
+            background-color: var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body class="bg-light">
 
-    <nav class="navbar navbar-expand-lg navbar-dark py-3" style="background-color: #2563eb;">
+    <nav class="navbar navbar-expand-lg navbar-dark student-navbar py-3">
         <div class="container">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="/student/dashboard">
-                <i class="bi bi-pen-fill me-2"></i>Pariksha
+                <i class="bi bi-mortarboard-fill me-2"></i>Pariksha
             </a>
             <div class="ms-auto d-flex align-items-center">
-                <a href="/student/dashboard" class="btn btn-sm btn-outline-light rounded-pill px-3 me-2">
+                <a href="/student/dashboard" class="btn btn-sm btn-outline-light rounded-pill px-3 me-2 border-opacity-50">
                     <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
                 </a>
-                <a href="/logout" class="btn btn-sm btn-light text-primary rounded-pill px-3 fw-bold">Logout</a>
+                <a href="/logout" class="btn btn-sm btn-light rounded-pill px-3 fw-bold" style="color: var(--primary-blue);">Logout</a>
             </div>
         </div>
     </nav>
@@ -50,18 +74,22 @@
         <div class="card border-0 shadow-sm p-4 mb-5 bg-white rounded-4">
             <div class="row align-items-center">
                 <div class="col-auto">
-                    <div class="profile-avatar">
-                        <%= user.first_name[0] %><%= user.last_name[0] %>
+                    <div class="profile-avatar overflow-hidden">
+                        <% if (user.profile_pic && user.profile_pic !== 'null') { %>
+                            <img src="/uploads/profile_pics/<%= user.profile_pic %>" alt="Profile">
+                        <% } else { %>
+                            <%= user.first_name[0] %><%= user.last_name[0] %>
+                        <% } %>
                     </div>
                 </div>
                 <div class="col ms-2">
                     <h2 class="fw-bold text-dark mb-1"><%= user.first_name %> <%= user.last_name %></h2>
-                    <div class="d-flex gap-3">
-                        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
-                            <i class="bi bi-person-badge me-2"></i>Roll No: <%= user.roll_no || 'N/A' %>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill fw-medium">
+                            <i class="bi bi-person-badge-fill me-2 text-primary"></i>Roll No: <%= user.roll_no || 'Not Assigned' %>
                         </span>
-                        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
-                            <i class="bi bi-mortarboard me-2"></i>Class: <%= user.class_name || 'Not Assigned' %>
+                        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill fw-medium">
+                            <i class="bi bi-mortarboard-fill me-2 text-primary"></i>Class: <%= user.class_name %> (<%= user.year_code %>)
                         </span>
                     </div>
                 </div>
@@ -70,60 +98,64 @@
 
         <div class="d-flex align-items-center mb-4">
             <h4 class="fw-bold text-dark mb-0">Past Exam Attempts</h4>
-            <span class="ms-3 badge bg-primary bg-opacity-10 text-primary rounded-pill"><%= results.length %> Attempts</span>
+            <span class="ms-3 badge rounded-pill px-3 py-2" style="background-color: #E0E7FF; color: var(--primary-blue);">
+                <%= results.length %> Attempts Found
+            </span>
         </div>
 
         <div class="card border-0 shadow-sm overflow-hidden bg-white rounded-4">
-            <table class="table mb-0 align-middle history-table table-hover">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4 py-3">Exam Name</th>
-                        <th>Score Obtained</th>
-                        <th>Submission Date</th>
-                        <th class="text-end pe-4">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="border-top-0">
-                    <% if (results.length === 0) { %>
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle history-table table-hover">
+                    <thead class="bg-light">
                         <tr>
-                            <td colspan="4" class="text-center py-5 text-muted">
-                                <i class="bi bi-journal-x display-4 opacity-25"></i>
-                                <p class="mt-3">You haven't attempted any exams yet.</p>
-                                <a href="/student/dashboard" class="btn btn-primary btn-sm rounded-pill mt-2 px-4">Browse Exams</a>
+                            <th class="ps-4 py-3">Exam Name</th>
+                            <th>Score Obtained</th>
+                            <th>Submission Date</th>
+                            <th class="text-end pe-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-top-0">
+                        <% if (results.length === 0) { %>
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="bi bi-journal-x display-4 opacity-25 d-block mb-3"></i>
+                                    <p class="mb-0 fs-5">You haven't attempted any exams yet.</p>
+                                    <a href="/student/dashboard" class="btn btn-primary btn-sm rounded-pill mt-3 px-4 shadow-sm" style="background-color: var(--primary-blue); border: none;">Browse Available Exams</a>
+                                </td>
+                            </tr>
+                        <% } %>
+                        
+                        <% results.forEach(r => { %>
+                        <tr>
+                            <td class="ps-4 py-3">
+                                <div class="fw-bold text-dark fs-6"><%= r.exam_name %></div>
+                                <div class="text-muted small">Academic Assessment</div>
+                            </td>
+                            <td>
+                                <div class="score-box fw-bold">
+                                    <%= r.score %> <span class="text-muted fw-normal" style="font-size: 0.85rem;">/ <%= r.total_questions %></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="text-dark fw-medium"><%= new Date(r.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %></div>
+                                <div class="text-muted small"><%= new Date(r.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <% if (r.status === 'PASSED') { %>
+                                    <span class="badge status-badge-pass rounded-pill px-4 py-2 fw-bold">
+                                        <i class="bi bi-check-circle-fill me-1"></i> PASSED
+                                    </span>
+                                <% } else { %>
+                                    <span class="badge status-badge-fail rounded-pill px-4 py-2 fw-bold">
+                                        <i class="bi bi-x-circle-fill me-1"></i> FAILED
+                                    </span>
+                                <% } %>
                             </td>
                         </tr>
-                    <% } %>
-                    
-                    <% results.forEach(r => { %>
-                    <tr>
-                        <td class="ps-4 py-3">
-                            <div class="fw-bold text-dark fs-5"><%= r.exam_name %></div>
-                            <div class="text-muted small">Final Assessment</div>
-                        </td>
-                        <td>
-                            <div class="score-box fw-bold">
-                                <%= r.score %> <span class="text-muted fw-normal" style="font-size: 0.85rem;">/ <%= r.total_questions %></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="text-dark"><%= new Date(r.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %></div>
-                            <div class="text-muted small"><%= new Date(r.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></div>
-                        </td>
-                        <td class="text-end pe-4">
-                            <% if (r.status === 'PASSED') { %>
-                                <span class="badge status-badge-pass rounded-pill px-4 py-2">
-                                    <i class="bi bi-check-circle-fill me-1"></i> PASSED
-                                </span>
-                            <% } else { %>
-                                <span class="badge status-badge-fail rounded-pill px-4 py-2">
-                                    <i class="bi bi-x-circle-fill me-1"></i> FAILED
-                                </span>
-                            <% } %>
-                        </td>
-                    </tr>
-                    <% }) %>
-                </tbody>
-            </table>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

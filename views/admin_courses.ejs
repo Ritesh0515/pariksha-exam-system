@@ -5,31 +5,39 @@
     <title>Manage Courses | Pariksha Admin</title>
     <style>
         .glass-card { transition: all 0.3s ease; }
+        
+        /* Updated to match your Midnight Blue theme */
         .course-badge {
-            background-color: #f0fdf4;
-            color: #16a34a;
-            font-weight: 700;
-            padding: 6px 16px;
-            border-radius: 10px;
-            border: 1px solid #dcfce7;
+            background-color: #E0E7FF; 
+            color: var(--primary-blue);
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        /* Ensuring the top border uses your theme color, not default Bootstrap blue */
+        .theme-border-top {
+            border-top: 4px solid var(--primary-blue) !important;
         }
     </style>
 </head>
 <body class="bg-light">
-<div class="container-fluid">
-    <div class="row">
+<div class="container-fluid px-0">
+    <div class="row g-0">
         <%- include('partials/sidebar', {currentPage: 'courses'}) %>
 
-        <div class="col-md-10 offset-md-2 p-5">
+        <div class="col-12 col-md-10 offset-md-2 p-3 p-md-5">
+            
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 class="fw-bold text-dark mb-0">Course Management</h2>
-                    <p class="text-muted small">Add and manage main academic departments (BBA, BBA-CA, MBA, etc.).</p>
+                    <h2 class="fw-bold text-dark mb-1">Course Management</h2>
+                    <p class="text-muted small mb-0">Add and manage main academic departments (BBA, BBA-CA, MBA, etc.).</p>
                 </div>
             </div>
 
             <% if (user.role !== 'staff') { %>
-            <div class="card glass-card p-4 border-0 shadow-sm border-top border-4 border-primary mb-5">
+            <div class="card glass-card p-4 border-0 shadow-sm theme-border-top mb-5">
                 <h5 class="fw-bold mb-3">Add New Course</h5>
                 <form action="/admin/courses/add" method="POST" class="row g-3">
                     <div class="col-md-9">
@@ -45,42 +53,50 @@
             <% } %>
 
             <div class="card border-0 shadow-sm overflow-hidden rounded-4">
-                <table class="table mb-0 align-middle table-hover bg-white">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="ps-4 py-3">Course ID</th>
-                            <th>Course Name</th>
-                            <th class="text-end pe-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (courses.length > 0) { %>
-                            <% courses.forEach(c => { %>
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle table-hover bg-white">
+                        <thead class="bg-light">
                             <tr>
-                                <td class="ps-4 text-muted small">#<%= c.course_id %></td>
-                                <td class="fw-bold text-dark"><%= c.course_name %></td>
-                                <td class="text-end pe-4">
-                                    <% if (user.role !== 'staff') { %>
-                                        <button class="btn btn-sm btn-outline-danger px-3 rounded-pill" 
-                                            onclick="handleCourseDelete('<%= c.course_id %>')">
-                                            <i class="bi bi-trash me-1"></i>Delete
-                                        </button>
-                                    <% } else { %>
-                                        <span class="badge bg-secondary-subtle text-secondary rounded-pill">View Only</span>
-                                    <% } %>
-                                </td>
+                                <th class="ps-4 py-3 text-muted fw-semibold">Course ID</th>
+                                <th class="py-3 text-muted fw-semibold">Course Name</th>
+                                <th class="text-end pe-4 py-3 text-muted fw-semibold">Actions</th>
                             </tr>
-                            <% }) %>
-                        <% } else { %>
-                            <tr>
-                                <td colspan="3" class="text-center py-5">
-                                    <p class="text-muted mb-0">No courses added yet.</p>
-                                </td>
-                            </tr>
-                        <% } %>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <% if (courses.length > 0) { %>
+                                <% courses.forEach(c => { %>
+                                <tr>
+                                    <td class="ps-4 text-muted small">#<%= c.course_id %></td>
+                                    
+                                    <td><span class="course-badge"><%= c.course_name %></span></td>
+                                    
+                                    <td class="text-end pe-4">
+                                        <% if (user.role !== 'staff') { %>
+                                            <button class="btn btn-sm btn-outline-danger px-3 rounded-pill" 
+                                                onclick="handleCourseDelete('<%= c.course_id %>')">
+                                                <i class="bi bi-trash me-1"></i>Delete
+                                            </button>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2">View Only</span>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="3" class="text-center py-5">
+                                        <div class="text-muted">
+                                            <i class="bi bi-inbox fs-1 d-block mb-2 text-opacity-50"></i>
+                                            <p class="mb-0">No courses added yet.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
             </div>
+            
         </div>
     </div>
 </div>

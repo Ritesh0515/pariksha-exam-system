@@ -5,34 +5,42 @@
     <title>Exam in Progress | Pariksha</title>
     <style>
         :root {
-            --primary-blue: #2563eb;
+            --primary-blue: #1E3A8A; 
+            --primary-hover: #172e6e;
             --bg-light: #f8fafc;
         }
-        body { background-color: var(--bg-light); }
+        body { 
+            background-color: var(--bg-light); 
+            user-select: none; /* Prevents text selection/copying */
+        }
         
-        /* Sticky Header */
+        /* Sticky Exam Header */
         .exam-header {
             position: sticky;
             top: 0;
             z-index: 1020;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 2px solid var(--primary-blue);
         }
 
         .timer-badge {
             background: #fff;
             border: 2px solid var(--primary-blue);
             border-radius: 50px;
-            padding: 8px 20px;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+            padding: 8px 24px;
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.1);
         }
 
-        /* Question Cards */
+        .progress { height: 8px; border-radius: 4px; background-color: #e2e8f0; }
+        .progress-bar { background-color: var(--primary-blue); transition: width 0.4s ease; }
+
+        /* Question Card Styling */
         .question-card {
             border-radius: 20px;
-            border: none;
+            border: 1px solid #e2e8f0;
             background: #ffffff;
+            transition: border-color 0.3s ease;
         }
 
         .question-number {
@@ -47,25 +55,26 @@
             font-weight: bold;
         }
 
-        /* Option Tiles */
+        /* Option Tile Styling */
         .option-tile {
             display: block;
-            padding: 15px 20px;
+            padding: 16px 20px;
             margin-bottom: 12px;
             background-color: #fff;
             border: 2px solid #f1f5f9;
-            border-radius: 12px;
+            border-radius: 14px;
             cursor: pointer;
             transition: all 0.2s ease;
         }
 
-        .form-check-input { display: none; } /* Hide standard radio buttons */
+        .form-check-input { display: none; } 
 
         .form-check-input:checked + .option-tile {
             background-color: #eff6ff;
             border-color: var(--primary-blue);
             color: var(--primary-blue);
             font-weight: 600;
+            box-shadow: 0 4px 10px rgba(30, 58, 138, 0.08);
         }
 
         .option-tile:hover {
@@ -82,7 +91,7 @@
             height: 100%;
             background: rgba(15, 23, 42, 0.98);
             z-index: 9999;
-            display: none; /* Hidden by default */
+            display: none;
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(10px);
@@ -97,34 +106,37 @@
             <i class="bi bi-exclamation-triangle-fill" style="font-size: 4rem;"></i>
         </div>
         <h3 class="fw-bold text-dark" id="warningTitle">Navigation Warning</h3>
-        <p class="text-muted fs-5 mb-4" id="warningMessage">
+        <p class="text-muted mb-4" id="warningMessage">
             You left the exam screen. This activity has been recorded.
         </p>
         
         <div class="bg-light p-3 rounded-4 mb-4 border">
-            <span class="text-uppercase small fw-bold text-secondary">Warning Status</span>
+            <span class="text-uppercase small fw-bold text-secondary">Warning Count</span>
             <div class="display-6 fw-bold text-danger mt-1">
                 <span id="switchCountDisplay">0</span> / 3
             </div>
         </div>
 
-        <button class="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow" id="resumeBtn" onclick="resumeExam()">
+        <button class="btn btn-primary btn-lg w-100 rounded-pill py-3 fw-bold shadow" style="background-color: var(--primary-blue); border: none;" id="resumeBtn" onclick="resumeExam()">
             Resume Exam
         </button>
     </div>
 </div>
 
-<header class="exam-header py-3 mb-5 shadow-sm">
-    <div class="container d-flex justify-content-between align-items-center">
-        <div>
-            <h4 class="fw-bold mb-0 text-dark"><%= exam.exam_name %></h4>
-            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">
-                <i class="bi bi-shield-check me-1"></i> Monitoring Active
-            </span>
+<header class="exam-header py-2 mb-5 shadow-sm">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark"><%= exam.exam_name %></h5>
+                <small class="text-muted"><i class="bi bi-person-circle me-1"></i> <%= user.first_name %> <%= user.last_name %></small>
+            </div>
+            <div class="timer-badge d-flex align-items-center">
+                <i class="bi bi-alarm-fill me-2" style="color: var(--primary-blue);"></i>
+                <span id="timer" class="h4 mb-0 fw-bold font-monospace">--:--</span>
+            </div>
         </div>
-        <div class="timer-badge d-flex align-items-center">
-            <i class="bi bi-alarm-fill me-2 text-primary"></i>
-            <span id="timer" class="h4 mb-0 fw-bold font-monospace">--:--</span>
+        <div class="progress mt-2">
+            <div id="examProgressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
         </div>
     </div>
 </header>
@@ -132,25 +144,30 @@
 <div class="container pb-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            
             <form id="examForm" action="/student/exam/<%= exam.exam_id %>/submit" method="POST">
                 <% questions.forEach((q, index)=> { %>
                     <div class="card p-4 mb-4 question-card shadow-sm">
                         <div class="d-flex justify-content-between align-items-start mb-4">
-                            <div class="d-flex align-items-center">
+                            <div class="d-flex">
                                 <div class="question-number me-3"><%= index + 1 %></div>
-                                <h5 class="fw-bold text-dark mb-0"><%= q.question_text %></h5>
+                                <h5 class="fw-bold text-dark mb-0 mt-1"><%= q.question_text %></h5>
                             </div>
-                            <button type="button" class="btn btn-light btn-sm rounded-pill px-3 border shadow-sm" 
-                                onclick="speakQuestion('<%= q.question_text %>', '<%= q.option_a %>', '<%= q.option_b %>', '<%= q.option_c %>', '<%= q.option_d %>')">
-                                <i class="bi bi-volume-up-fill me-1"></i> Listen
+                            
+                            <button type="button" class="btn btn-light btn-sm rounded-pill px-3 border shadow-sm flex-shrink-0" 
+                                onclick="speakQuestion(this)"
+                                data-text="<%= q.question_text %>"
+                                data-a="<%= q.option_a %>"
+                                data-b="<%= q.option_b %>"
+                                data-c="<%= q.option_c %>"
+                                data-d="<%= q.option_d %>">
+                                <i class="bi bi-volume-up-fill me-1" style="color: var(--primary-blue);"></i> Listen
                             </button>
                         </div>
 
                         <div class="options-group">
                             <% ['a', 'b', 'c', 'd'].forEach(opt => { %>
                                 <div class="form-check p-0">
-                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="<%= opt %>" id="q<%= q.question_id %><%= opt %>">
+                                    <input class="form-check-input" type="radio" name="q<%= q.question_id %>" value="<%= opt %>" id="q<%= q.question_id %><%= opt %>" onchange="updateProgress()">
                                     <label class="option-tile shadow-sm" for="q<%= q.question_id %><%= opt %>">
                                         <span class="me-2 text-muted fw-bold text-uppercase"><%= opt %>:</span> <%= q['option_' + opt] %>
                                     </label>
@@ -162,8 +179,8 @@
 
                 <div class="card p-5 rounded-4 border-0 shadow-sm text-center mt-5 bg-white">
                     <h4 class="fw-bold mb-3">Finish Exam</h4>
-                    <p class="text-muted mb-4">Check your answers one last time. Once you submit, you cannot change them.</p>
-                    <button type="submit" class="btn btn-success btn-lg px-5 shadow rounded-pill fw-bold py-3" onclick="return confirm('Do you want to submit your final answers?')">
+                    <p class="text-muted mb-4">Confirm all answers before final submission.</p>
+                    <button type="submit" class="btn btn-success btn-lg px-5 shadow rounded-pill fw-bold py-3" onclick="return confirm('Submit your final answers?')">
                         Final Submission <i class="bi bi-check2-all ms-2"></i>
                     </button>
                 </div>
@@ -174,9 +191,10 @@
 
 <script>
     const examId = "<%= exam.exam_id %>";
+    const totalQuestions = parseInt("<%= questions.length %>");
     let tabSwitchCount = 0;
 
-    // --- 1. PERSISTENT TIMER LOGIC ---
+    // --- 1. PERSISTENT TIMER ---
     let currentTime = parseInt("<%= remainingSeconds %>"); 
     const timerDisplay = document.getElementById('timer');
 
@@ -185,9 +203,9 @@
         const secs = currentTime % 60;
         timerDisplay.innerHTML = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         
-        // Turn red if less than 1 minute remains
         if (currentTime < 60) {
             timerDisplay.classList.add('text-danger');
+            timerDisplay.parentElement.style.borderColor = '#dc3545';
         }
 
         if (currentTime <= 0) {
@@ -197,60 +215,57 @@
         currentTime--;
     }, 1000);
 
-    // --- 2. TEXT TO SPEECH (TTS) LOGIC ---
-    let voices = [];
-    function setVoices() { 
-        voices = window.speechSynthesis.getVoices(); 
+    // --- 2. PROGRESS BAR ---
+    function updateProgress() {
+        const answeredCount = document.querySelectorAll('input[type="radio"]:checked').length;
+        const percent = (answeredCount / totalQuestions) * 100;
+        document.getElementById('examProgressBar').style.width = percent + '%';
     }
-    window.speechSynthesis.onvoiceschanged = setVoices;
-    setVoices();
 
-    function speakQuestion(qText, a, b, c, d) {
+    // --- 3. TEXT TO SPEECH (Bulletproof version) ---
+    function speakQuestion(btn) {
         window.speechSynthesis.cancel();
+        
+        const qText = btn.getAttribute('data-text') || "";
+        const a = btn.getAttribute('data-a') || "";
+        const b = btn.getAttribute('data-b') || "";
+        const c = btn.getAttribute('data-c') || "";
+        const d = btn.getAttribute('data-d') || "";
+
         const fullText = `${qText}. Option A: ${a}. Option B: ${b}. Option C: ${c}. Option D: ${d}.`;
         const utterance = new SpeechSynthesisUtterance(fullText);
-        
-        // Find a natural English voice
-        const preferredVoice = voices.find(v => v.name.includes('Google') && v.lang.includes('en')) 
-                            || voices.find(v => v.lang.includes('en')) 
-                            || voices[0];
-        
-        if (preferredVoice) utterance.voice = preferredVoice;
-        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.rate = 0.9; 
         window.speechSynthesis.speak(utterance);
     }
 
-    // --- 3. ANTI-CHEAT TAB DETECTION ---
+    // --- 4. ANTI-CHEAT TAB DETECTION ---
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
             tabSwitchCount++;
-            
-            // Update UI
             document.getElementById('switchCountDisplay').innerText = tabSwitchCount;
 
-            // Log activity to server
+            // Log event to DB
             fetch('/api/monitor/log', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ examId, eventType: 'TAB_SWITCH', details: `Warning ${tabSwitchCount}` })
             });
 
-            // Update warning messages
             const msgArea = document.getElementById('warningMessage');
             const titleArea = document.getElementById('warningTitle');
             const resumeBtn = document.getElementById('resumeBtn');
 
             if (tabSwitchCount === 1) {
                 titleArea.innerText = "Warning 1 of 3";
-                msgArea.innerHTML = "You switched tabs or minimized the browser. Please stay on this screen.";
+                msgArea.innerHTML = "Navigating away from this screen is prohibited. This incident has been logged.";
             } 
             else if (tabSwitchCount === 2) {
                 titleArea.innerText = "Warning 2 of 3";
-                msgArea.innerHTML = "<strong>Attention:</strong> If you leave one more time, your exam will be <strong>automatically submitted</strong>.";
+                msgArea.innerHTML = "<strong>Final Warning:</strong> One more violation will result in <strong>automatic submission</strong>.";
             } 
             else if (tabSwitchCount >= 3) {
                 titleArea.innerText = "Automatic Submission";
-                msgArea.innerHTML = "The limit has been reached. Your exam is being submitted...";
+                msgArea.innerHTML = "Warning limit exceeded. Submitting your assessment now...";
                 resumeBtn.innerText = "Submitting...";
                 resumeBtn.disabled = true;
 
@@ -258,8 +273,6 @@
                     document.getElementById('examForm').submit();
                 }, 2000);
             }
-
-            // Show the overlay
             document.getElementById('cheatWarning').style.display = 'flex';
         }
     });
@@ -267,6 +280,10 @@
     function resumeExam() {
         document.getElementById('cheatWarning').style.display = 'none';
     }
+
+    // Disable context menu (right-click)
+    document.addEventListener('contextmenu', event => event.preventDefault());
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

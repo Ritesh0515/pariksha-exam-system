@@ -1,298 +1,354 @@
-<%- include('partials/head') %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('partials/head') %>
+    <title>Manage Students | Pariksha Admin</title>
+    <style>
+        .course-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+            background: white;
+        }
+        .course-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-blue);
+            box-shadow: 0 12px 20px -5px rgba(30, 58, 138, 0.15) !important;
+        }
+        .avatar-circle {
+            width: 60px;
+            height: 60px;
+            background: #E0E7FF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            color: var(--primary-blue);
+            font-weight: 700;
+        }
+        .breadcrumb-item a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .theme-btn {
+            background-color: var(--primary-blue);
+            border-color: var(--primary-blue);
+            color: white;
+        }
+        .theme-btn:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            color: white;
+        }
+        .theme-text {
+            color: var(--primary-blue) !important;
+        }
+    </style>
+</head>
 
-    <body class="bg-light">
-        <div class="container-fluid">
-            <div class="row">
-                <%- include('partials/sidebar', {currentPage: 'students' }) %>
-                    <div class="col-md-10 offset-md-2 p-5">
-                        <h2 class="fw-bold mb-4">Student Management</h2>
+<body class="bg-light">
+    <div class="container-fluid px-0">
+        <div class="row g-0">
+            <%- include('partials/sidebar', {currentPage: 'students' }) %>
+            
+            <div class="col-12 col-md-10 offset-md-2 p-3 p-md-5">
+                <div class="d-flex justify-content-between align-items-end mb-4">
+                    <div>
+                        <h2 class="fw-bold text-dark mb-1">Student Management</h2>
+                        <p class="text-muted mb-0">Navigate through courses to view and manage student roll numbers.</p>
+                    </div>
+                </div>
 
-                        <!-- Breadcrumb -->
-                        <nav aria-label="breadcrumb" class="mb-4">
-                            <ol class="breadcrumb bg-white p-3 rounded-3 shadow-sm" id="breadcrumb">
-                                <li class="breadcrumb-item active" aria-current="page">Students</li>
-                            </ol>
-                        </nav>
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb bg-white p-3 rounded-4 shadow-sm border" id="breadcrumb">
+                        <li class="breadcrumb-item active" aria-current="page">Students</li>
+                    </ol>
+                </nav>
 
-                        <!-- Course View -->
-                        <div id="courseView" class="row g-4">
-                            <% courses.forEach(c=> { %>
-                                <div class="col-md-4">
-                                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden course-card"
-                                        data-course="<%= c.course_name %>"
-                                        onclick="selectCourse('<%= c.course_name %>')">
-                                        <div class="card-body text-center p-5">
-                                            <h3 class="card-title fw-bold text-primary">
-                                                <%= c.course_name %>
-                                            </h3>
-                                            <p class="card-text text-muted">Click to view years</p>
-                                        </div>
+                <div id="courseView" class="row g-4">
+                    <% courses.forEach(c => { %>
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden course-card"
+                                data-course="<%= c.course_name %>"
+                                onclick="selectCourse('<%= c.course_name %>')">
+                                <div class="card-body text-center p-4">
+                                    <div class="avatar-circle mx-auto mb-3 fs-3">
+                                        <i class="bi bi-mortarboard"></i>
                                     </div>
+                                    <h5 class="card-title fw-bold text-dark mb-1">
+                                        <%= c.course_name %>
+                                    </h5>
+                                    <p class="card-text text-muted small mb-0">View Academic Years</p>
                                 </div>
-                                <% }) %>
-                        </div>
-
-                        <!-- Year View -->
-                        <div id="yearView" class="d-none">
-                            <div class="text-center">
-                                <h4 class="fw-bold mb-4">Select Year</h4>
-                                <div class="row g-3 justify-content-center">
-                                    <div class="col-md-3">
-                                        <button class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm"
-                                            onclick="selectYear('FY')">FY</button>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <button class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm"
-                                            onclick="selectYear('SY')">SY</button>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <button class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm"
-                                            onclick="selectYear('TY')">TY</button>
-                                    </div>
-                                </div>
-                                <button class="btn btn-outline-secondary mt-4 rounded-pill px-4"
-                                    onclick="goBackToCourses()">Back to Courses</button>
                             </div>
                         </div>
+                    <% }) %>
+                </div>
 
-                        <!-- Student View -->
-                        <div id="studentView" class="d-none">
-                            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                                <div class="p-4 bg-light border-bottom">
-                                    <div class="row g-3 align-items-end">
-                                        <div class="col-md-6">
-                                            <label class="form-label small fw-bold">SEARCH</label>
-                                            <input id="searchFilter" type="text"
-                                                class="form-control bg-white border-0 shadow-sm"
-                                                placeholder="Enter name or email">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <button id="resetFilters"
-                                                class="btn btn-outline-secondary w-100">Reset</button>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <button class="btn btn-outline-primary w-100" onclick="goBackToYears()">Back
-                                                to Years</button>
-                                        </div>
+                <div id="yearView" class="d-none">
+                    <div class="text-center mb-5">
+                        <h4 class="fw-bold text-dark">Select Academic Year</h4>
+                        <button class="btn btn-sm btn-link text-muted" onclick="goBackToCourses()">
+                            <i class="bi bi-arrow-left"></i> Switch Course
+                        </button>
+                    </div>
+                    <div class="row g-3 justify-content-center">
+                        <div class="col-md-3">
+                            <button class="btn btn-white border shadow-sm w-100 py-3 fw-bold rounded-4 transition" onclick="selectYear('FY')">FY</button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-white border shadow-sm w-100 py-3 fw-bold rounded-4 transition" onclick="selectYear('SY')">SY</button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-white border shadow-sm w-100 py-3 fw-bold rounded-4 transition" onclick="selectYear('TY')">TY</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="studentView" class="d-none">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="p-4 bg-white border-bottom">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-muted">SEARCH STUDENTS</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0"><i class="bi bi-search text-muted"></i></span>
+                                        <input id="searchFilter" type="text" class="form-control bg-light border-0 py-2" placeholder="Enter name or email...">
                                     </div>
                                 </div>
-                                <table class="table mb-0 align-middle table-hover bg-white">
-                                    <thead class="bg-light text-muted small">
-                                        <tr>
-                                            <th class="ps-4 py-3">ROLL NO</th>
-                                            <th>STUDENT DETAILS</th>
-                                            <th class="text-end pe-4">ACTIONS</th>
+                                <div class="col-md-3">
+                                    <button id="resetFilters" class="btn btn-light border w-100 py-2">Clear Search</button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-light border w-100 py-2" onclick="goBackToYears()">
+                                        <i class="bi bi-arrow-left me-1"></i> Back to Years
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table mb-0 align-middle table-hover bg-white">
+                                <thead class="bg-light text-muted small text-uppercase fw-semibold">
+                                    <tr>
+                                        <th class="ps-4 py-3 border-0">Roll No</th>
+                                        <th class="border-0">Student Details</th>
+                                        <th class="text-end pe-4 border-0">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentTableBody" class="border-top-0">
+                                    <% students.forEach(s => { %>
+                                        <tr data-course="<%= s.class_name %>" data-year="<%= s.year_code %>"
+                                            data-name="<%= s.first_name %> <%= s.last_name %>"
+                                            data-email="<%= s.email %>">
+                                            
+                                            <td class="ps-4">
+                                                <% if (s.roll_no) { %>
+                                                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fs-6 fw-bold"><%= s.roll_no %></span>
+                                                <% } else { %>
+                                                    <span class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill small">Pending</span>
+                                                <% } %>
+                                            </td>
+
+                                            <td>
+                                                <div class="fw-bold text-dark mb-1">
+                                                    <%= s.first_name %> <%= s.last_name %>
+                                                </div>
+                                                <div class="text-muted small">
+                                                    <i class="bi bi-envelope me-1"></i><%= s.email %>
+                                                </div>
+                                            </td>
+
+                                            <td class="text-end pe-4">
+                                                <button class="btn btn-sm btn-light border rounded-pill px-3 shadow-sm theme-text fw-medium"
+                                                    data-user-id="<%= s.user_id %>" data-roll-no="<%= s.roll_no %>"
+                                                    data-full-name="<%= s.first_name %> <%= s.last_name %>"
+                                                    data-class-name="<%= s.class_name %>"
+                                                    data-year-code="<%= s.year_code %>"
+                                                    onclick="openEditModal(this)">
+                                                    <i class="bi bi-pencil-square me-1"></i> Assign Roll
+                                                </button>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody id="studentTableBody">
-                                        <% students.forEach(s=> { %>
-                                            <tr data-course="<%= s.class_name %>" data-year="<%= s.year_code %>"
-                                                data-name="<%= s.first_name %> <%= s.last_name %>"
-                                                data-email="<%= s.email %>">
-                                                <td class="ps-4">
-                                                    <% if (s.roll_no) { %>
-                                                        <span class="fw-bold text-primary">#<%= s.roll_no %></span>
-                                                        <% } else { %>
-                                                            <span class="text-muted">NOT ASSIGNED</span>
-                                                            <% } %>
-                                                </td>
-
-                                                <td>
-                                                    <div class="fw-bold text-dark">
-                                                        <%= s.first_name %>
-                                                            <%= s.last_name %>
-                                                    </div>
-                                                    <div class="text-muted small">
-                                                        <%= s.email %> • <%= s.year_code %>
-                                                                <%= s.class_name %>
-                                                    </div>
-                                                </td>
-
-                                                <td class="text-end pe-4">
-                                                    <button
-                                                        class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm"
-                                                        data-user-id="<%= s.user_id %>" data-roll-no="<%= s.roll_no %>"
-                                                        data-full-name="<%= s.first_name %> <%= s.last_name %>"
-                                                        data-class-name="<%= s.class_name %>"
-                                                        data-year-code="<%= s.year_code %>"
-                                                        onclick="openEditModal(this)">
-                                                        <i class="bi bi-pencil-square me-1"></i> Update Info
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <% }) %>
-                                    </tbody>
-                                </table>
-                            </div>
+                                    <% }) %>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-            </div>
-        </div>
-
-        <div class="modal fade" id="editRollModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg rounded-4">
-                    <div class="modal-header bg-primary text-white border-0">
-                        <h5 class="modal-title fw-bold">Update Student Info</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <form id="editRollForm" method="POST">
-                        <div class="modal-body p-4 text-center">
-                            <p class="text-muted">Updating information for <br><strong id="student_display_name"
-                                    class="text-dark fs-5"></strong></p>
-                            <p id="modal_context_label" class="text-primary fw-bold small mt-2"></p>
-                            <div class="text-start mt-3">
-                                <label class="form-label small fw-bold text-primary">Course</label>
-                                <select name="course" id="modal_course_select" class="form-select bg-light border-0 p-3"
-                                    required>
-                                    <% courses.forEach(c=> { %>
-                                        <option>
-                                            <%= c.course_name %>
-                                        </option>
-                                        <% }) %>
-                                </select>
-                            </div>
-                            <div class="text-start mt-3">
-                                <label class="form-label small fw-bold text-primary">Year</label>
-                                <select name="year" id="modal_year_select" class="form-select bg-light border-0 p-3"
-                                    required>
-                                    <option>FY</option>
-                                    <option>SY</option>
-                                    <option>TY</option>
-                                </select>
-                            </div>
-                            <div class="text-start mt-3">
-                                <label class="form-label small fw-bold text-primary">Roll Number</label>
-                                <input type="number" name="roll_no" id="modal_roll_input"
-                                    class="form-control bg-light border-0 p-3" placeholder="e.g. 15" required>
-                            </div>
-                        </div>
-                        <div class="modal-footer border-0 p-4">
-                            <button type="button" class="btn btn-light px-4 rounded-pill"
-                                data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm rounded-pill">Save
-                                Changes</button>
-                        </div>
-                    </form>
                 </div>
             </div>
         </div>
+    </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <div class="modal fade" id="editRollModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header text-white border-0 py-3" style="background-color: var(--primary-blue);">
+                    <h5 class="modal-title fw-bold">Update Student Info</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editRollForm" method="POST">
+                    <div class="modal-body p-4 text-center">
+                        <div class="avatar-circle mx-auto mb-3" style="width: 50px; height: 50px; background: #E0E7FF; color: var(--primary-blue);">
+                            <i class="bi bi-person-badge fs-4"></i>
+                        </div>
+                        <p class="text-muted mb-1">Updating information for</p>
+                        <h5 id="student_display_name" class="text-dark fw-bold mb-0"></h5>
+                        <p id="modal_context_label" class="text-muted small mt-1"></p>
+                        
+                        <div class="text-start mt-4">
+                            <label class="form-label small fw-bold text-muted">Course</label>
+                            <select name="course" id="modal_course_select" class="form-select bg-light border-0 p-3" required>
+                                <% courses.forEach(c => { %>
+                                    <option value="<%= c.course_name %>"><%= c.course_name %></option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="text-start mt-3">
+                            <label class="form-label small fw-bold text-muted">Year</label>
+                            <select name="year" id="modal_year_select" class="form-select bg-light border-0 p-3" required>
+                                <option value="FY">FY</option>
+                                <option value="SY">SY</option>
+                                <option value="TY">TY</option>
+                            </select>
+                        </div>
+                        <div class="text-start mt-3">
+                            <label class="form-label small fw-bold text-muted">Roll Number</label>
+                            <input type="number" name="roll_no" id="modal_roll_input" class="form-control bg-light border-0 p-3 fw-bold" placeholder="e.g. 15" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light px-4 rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn theme-btn px-4 fw-bold shadow-sm rounded-pill">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-        <script>
-            // Check for roll number conflict error on page load
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('error') === 'already_taken') {
-                Swal.fire({
-                    title: 'Roll Number Conflict',
-                    text: 'The roll number is already assigned in that specific Class and Year.',
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    // Remove the error parameter from URL
-                    urlParams.delete('error');
-                    const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-                    window.history.replaceState(null, null, newUrl);
-                });
-            }
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-            let selectedCourse = null;
-            let selectedYear = null;
-
-            function updateBreadcrumb() {
-                const breadcrumb = document.getElementById('breadcrumb');
-                breadcrumb.innerHTML = '<li class="breadcrumb-item"><a href="#" onclick="goBackToCourses()">Students</a></li>';
-                if (selectedCourse) {
-                    breadcrumb.innerHTML += '<li class="breadcrumb-item active" aria-current="page">' + selectedCourse + '</li>';
-                }
-                if (selectedYear) {
-                    breadcrumb.innerHTML += '<li class="breadcrumb-item active" aria-current="page">' + selectedYear + '</li>';
-                }
-            }
-
-            function selectCourse(course) {
-                selectedCourse = course;
-                selectedYear = null;
-                document.getElementById('courseView').classList.add('d-none');
-                document.getElementById('yearView').classList.remove('d-none');
-                document.getElementById('studentView').classList.add('d-none');
-                updateBreadcrumb();
-            }
-
-            function selectYear(year) {
-                selectedYear = year;
-                document.getElementById('courseView').classList.add('d-none');
-                document.getElementById('yearView').classList.add('d-none');
-                document.getElementById('studentView').classList.remove('d-none');
-                updateBreadcrumb();
-                filterStudentTable();
-            }
-
-            function goBackToCourses() {
-                selectedCourse = null;
-                selectedYear = null;
-                document.getElementById('courseView').classList.remove('d-none');
-                document.getElementById('yearView').classList.add('d-none');
-                document.getElementById('studentView').classList.add('d-none');
-                updateBreadcrumb();
-            }
-
-            function goBackToYears() {
-                selectedYear = null;
-                document.getElementById('courseView').classList.add('d-none');
-                document.getElementById('yearView').classList.remove('d-none');
-                document.getElementById('studentView').classList.add('d-none');
-                updateBreadcrumb();
-            }
-
-            function openEditModal(button) {
-                const id = button.getAttribute('data-user-id');
-                const currentRoll = button.getAttribute('data-roll-no');
-                const name = button.getAttribute('data-full-name');
-                const className = button.getAttribute('data-class-name');
-                const yearCode = button.getAttribute('data-year-code');
-
-                // Fix for "null" values coming from DB
-                const rollValue = (currentRoll === 'null' || !currentRoll || currentRoll === '') ? '' : currentRoll;
-
-                document.getElementById('editRollForm').action = '/admin/students/update-roll/' + id;
-                document.getElementById('student_display_name').innerText = name;
-                document.getElementById('modal_context_label').innerText = 'Updating for ' + yearCode + ' ' + className;
-                document.getElementById('modal_course_select').value = className;
-                document.getElementById('modal_year_select').value = yearCode;
-                document.getElementById('modal_roll_input').value = rollValue;
-
-                // Explicitly trigger the modal
-                var myModal = new bootstrap.Modal(document.getElementById('editRollModal'));
-                myModal.show();
-            }
-
-            function filterStudentTable() {
-                const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
-                const rows = document.querySelectorAll('#studentTableBody tr');
-
-                rows.forEach(row => {
-                    const course = row.dataset.course;
-                    const year = row.dataset.year;
-                    const name = row.dataset.name.toLowerCase();
-                    const email = row.dataset.email.toLowerCase();
-
-                    const matchesCourse = course === selectedCourse;
-                    const matchesYear = year === selectedYear;
-                    const matchesSearch = !searchFilter || name.includes(searchFilter) || email.includes(searchFilter);
-
-                    row.style.display = matchesCourse && matchesYear && matchesSearch ? '' : 'none';
-                });
-            }
-
-            document.getElementById('searchFilter').addEventListener('input', filterStudentTable);
-            document.getElementById('resetFilters').addEventListener('click', function () {
-                document.getElementById('searchFilter').value = '';
-                filterStudentTable();
+    <script>
+        // Check for roll number conflict error on page load
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('error') === 'already_taken') {
+            Swal.fire({
+                title: 'Roll Number Conflict',
+                text: 'The roll number is already assigned in that specific Class and Year.',
+                icon: 'error',
+                confirmButtonColor: '#1E3A8A', // Matched to theme
+                confirmButtonText: 'OK'
+            }).then(() => {
+                // Remove the error parameter from URL
+                urlParams.delete('error');
+                const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+                window.history.replaceState(null, null, newUrl);
             });
-        </script>
-    </body>
+        }
+        
+        if (urlParams.get('success') === 'student_updated') {
+            Swal.fire({ icon: 'success', title: 'Updated Successfully', timer: 1500, showConfirmButton: false });
+        }
 
-    </html>
+        let selectedCourse = null;
+        let selectedYear = null;
+
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            let html = '<li class="breadcrumb-item"><a href="#" onclick="goBackToCourses()">Students</a></li>';
+            if (selectedCourse) {
+                html += `<li class="breadcrumb-item fw-medium theme-text">${selectedCourse}</li>`;
+            }
+            if (selectedYear) {
+                html += `<li class="breadcrumb-item active fw-bold" aria-current="page">${selectedYear}</li>`;
+            }
+            breadcrumb.innerHTML = html;
+        }
+
+        function selectCourse(course) {
+            selectedCourse = course;
+            selectedYear = null;
+            document.getElementById('courseView').classList.add('d-none');
+            document.getElementById('yearView').classList.remove('d-none');
+            document.getElementById('studentView').classList.add('d-none');
+            updateBreadcrumb();
+        }
+
+        function selectYear(year) {
+            selectedYear = year;
+            document.getElementById('courseView').classList.add('d-none');
+            document.getElementById('yearView').classList.add('d-none');
+            document.getElementById('studentView').classList.remove('d-none');
+            updateBreadcrumb();
+            filterStudentTable();
+            
+            // Clear search when entering a new year
+            document.getElementById('searchFilter').value = '';
+        }
+
+        function goBackToCourses() {
+            selectedCourse = null;
+            selectedYear = null;
+            document.getElementById('courseView').classList.remove('d-none');
+            document.getElementById('yearView').classList.add('d-none');
+            document.getElementById('studentView').classList.add('d-none');
+            updateBreadcrumb();
+        }
+
+        function goBackToYears() {
+            selectedYear = null;
+            document.getElementById('courseView').classList.add('d-none');
+            document.getElementById('yearView').classList.remove('d-none');
+            document.getElementById('studentView').classList.add('d-none');
+            updateBreadcrumb();
+        }
+
+        // Updated Modal Logic using proper button argument
+        function openEditModal(button) {
+            const id = button.getAttribute('data-user-id');
+            const currentRoll = button.getAttribute('data-roll-no');
+            const name = button.getAttribute('data-full-name');
+            const className = button.getAttribute('data-class-name');
+            const yearCode = button.getAttribute('data-year-code');
+
+            // Fix for "null" values coming from DB
+            const rollValue = (currentRoll === 'null' || !currentRoll || currentRoll === '') ? '' : currentRoll;
+
+            document.getElementById('editRollForm').action = '/admin/students/update-roll/' + id;
+            document.getElementById('student_display_name').innerText = name;
+            document.getElementById('modal_context_label').innerText = 'Updating for ' + yearCode + ' ' + className;
+            document.getElementById('modal_course_select').value = className;
+            document.getElementById('modal_year_select').value = yearCode;
+            document.getElementById('modal_roll_input').value = rollValue;
+
+            var myModal = new bootstrap.Modal(document.getElementById('editRollModal'));
+            myModal.show();
+        }
+
+        function filterStudentTable() {
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('#studentTableBody tr');
+
+            rows.forEach(row => {
+                const course = row.getAttribute('data-course');
+                const year = row.getAttribute('data-year');
+                const name = row.getAttribute('data-name').toLowerCase();
+                const email = row.getAttribute('data-email').toLowerCase();
+
+                const matchesCourse = course === selectedCourse;
+                const matchesYear = year === selectedYear;
+                const matchesSearch = !searchFilter || name.includes(searchFilter) || email.includes(searchFilter);
+
+                row.style.display = matchesCourse && matchesYear && matchesSearch ? '' : 'none';
+            });
+        }
+
+        document.getElementById('searchFilter').addEventListener('input', filterStudentTable);
+        document.getElementById('resetFilters').addEventListener('click', function () {
+            document.getElementById('searchFilter').value = '';
+            filterStudentTable();
+        });
+    </script>
+</body>
+</html>

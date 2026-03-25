@@ -4,111 +4,151 @@
     <%- include('partials/head') %>
     <title>Exam Result | Pariksha</title>
     <style>
+        :root {
+            --primary-blue: #1E3A8A;
+            --primary-hover: #172e6e;
+        }
+
         .result-card {
-            border-radius: 30px;
+            border-radius: 32px;
             background: #ffffff;
             overflow: hidden;
+            border: 1px solid #e2e8f0;
         }
+        
         .result-header {
-            padding: 40px;
+            padding: 40px 20px;
             background: #f8fafc;
             border-bottom: 1px solid #f1f5f9;
         }
+
+        /* Enhanced Score Circle */
         .score-circle {
-            width: 150px;
-            height: 150px;
+            width: 160px;
+            height: 160px;
             border-radius: 50%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             margin: 0 auto;
-            border: 8px solid #f1f5f9;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border: 10px solid #f1f5f9;
+            transition: all 0.5s ease;
         }
-        .pass-circle { border-color: #dcfce7; color: #16a34a; }
-        .fail-circle { border-color: #fee2e2; color: #dc2626; }
         
+        .pass-circle { 
+            border-color: #dcfce7; 
+            color: #16a34a; 
+            box-shadow: 0 0 25px rgba(22, 163, 74, 0.15);
+        }
+        
+        .fail-circle { 
+            border-color: #fee2e2; 
+            color: #dc2626; 
+            box-shadow: 0 0 25px rgba(220, 38, 38, 0.1);
+        }
+
         .status-banner {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
             font-weight: 800;
-            padding: 8px 20px;
+            letter-spacing: 1.5px;
+            padding: 10px 24px;
             border-radius: 50px;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-dashboard {
+            background-color: var(--primary-blue);
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-dashboard:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(30, 58, 138, 0.3);
         }
     </style>
 </head>
 <body class="bg-light">
     <div class="container py-5">
         <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-5">
-                <div class="card result-card border-0 shadow-lg text-center">
+            <div class="col-lg-5 col-md-8">
+                <div class="card result-card border-0 shadow-lg text-center animate__animated animate__fadeIn">
                     
                     <div class="result-header">
                         <div class="mb-3">
                             <% if (status === 'PASSED') { %>
-                                <span class="status-banner bg-success bg-opacity-10 text-success">
-                                    <i class="bi bi-patch-check-fill me-1"></i> Success
-                                </span>
+                                <div class="status-banner bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-award-fill me-2 fs-5"></i> Assessment Cleared
+                                </div>
                             <% } else { %>
-                                <span class="status-banner bg-danger bg-opacity-10 text-danger">
-                                    <i class="bi bi-exclamation-octagon-fill me-1"></i> Needs Improvement
-                                </span>
+                                <div class="status-banner bg-danger bg-opacity-10 text-danger">
+                                    <i class="bi bi-exclamation-circle-fill me-2 fs-5"></i> Attempt Unsuccessful
+                                </div>
                             <% } %>
                         </div>
-                        <h2 class="fw-bold text-dark mb-0">Exam Results</h2>
-                        <p class="text-muted small mt-1"><%= exam.exam_name %></p>
+                        <h2 class="fw-bold text-dark mb-1">Examination Result</h2>
+                        <p class="text-muted fw-medium small"><%= exam.exam_name %></p>
                     </div>
 
-                    <div class="card-body p-5">
+                    <div class="card-body p-4 p-md-5">
                         <div class="score-circle mb-4 <%= status === 'PASSED' ? 'pass-circle' : 'fail-circle' %>">
-                            <div class="display-5 fw-bold mb-0"><%= score %></div>
-                            <div class="small opacity-75">out of <%= total %></div>
+                            <div class="display-4 fw-bold mb-0" style="line-height: 1;"><%= score %></div>
+                            <div class="small opacity-75 fw-bold text-uppercase" style="font-size: 0.65rem;">Marks Scored</div>
                         </div>
 
-                        <h3 class="fw-bold mb-2 <%= status === 'PASSED' ? 'text-success' : 'text-danger' %>">
+                        <h3 class="fw-bold mb-3 <%= status === 'PASSED' ? 'text-success' : 'text-danger' %>">
                             <%= status %>
                         </h3>
                         
-                        <p class="text-muted px-4">
+                        <div class="px-2">
                             <% if (status === 'PASSED') { %>
-                                Congratulations! You have successfully cleared the assessment for <strong><%= exam.exam_name %></strong>.
+                                <p class="text-muted mb-0">Excellent work! You have successfully demonstrated your proficiency in this subject. Keep up the momentum.</p>
                             <% } else { %>
-                                Unfortunately, you did not reach the passing score for <strong><%= exam.exam_name %></strong>. Keep practicing!
+                                <p class="text-muted mb-0">Don't be discouraged. Review the course material and attempt the next scheduled assessment with more preparation.</p>
                             <% } %>
-                        </p>
+                        </div>
 
-                        <hr class="my-4 opacity-50">
-
-                        <div class="row text-start mb-4">
-                            <div class="col-6">
-                                <small class="text-muted d-block">Percentage</small>
-                                <span class="fw-bold text-dark"><%= Math.round((score/total)*100) %>%</span>
+                        <div class="bg-light rounded-4 p-3 my-4 d-flex justify-content-around align-items-center">
+                            <div class="text-center">
+                                <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.6rem;">Percentage</small>
+                                <span class="fw-bold text-dark fs-5"><%= Math.round((score/total)*100) %>%</span>
                             </div>
-                            <div class="col-6">
-                                <small class="text-muted d-block">Required to Pass</small>
-                                <span class="fw-bold text-dark"><%= exam.pass_marks %> Marks</span>
+                            <div class="vr opacity-10"></div>
+                            <div class="text-center">
+                                <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.6rem;">Out of</small>
+                                <span class="fw-bold text-dark fs-5"><%= total %> Marks</span>
+                            </div>
+                            <div class="vr opacity-10"></div>
+                            <div class="text-center">
+                                <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.6rem;">Passing</small>
+                                <span class="fw-bold text-dark fs-5"><%= exam.pass_marks %></span>
                             </div>
                         </div>
 
-                        <div class="d-grid gap-2">
-                            <a href="/student/dashboard" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm py-3">
-                                Return to Dashboard
+                        <div class="d-grid gap-3 pt-2">
+                            <a href="/student/dashboard" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm py-3 btn-dashboard">
+                                Return to Dashboard <i class="bi bi-house-door-fill ms-2"></i>
                             </a>
-                            <a href="/student/history" class="btn btn-link text-muted text-decoration-none small">
-                                View My History
+                            <a href="/student/history" class="btn btn-link text-muted text-decoration-none fw-semibold small">
+                                <i class="bi bi-clock-history me-1"></i> View Full Performance History
                             </a>
                         </div>
                     </div>
                 </div>
                 
-                <p class="text-center text-muted mt-4 small">
-                    A copy of this result has been saved to your profile.
-                </p>
+                <div class="text-center mt-4">
+                    <p class="text-muted small">
+                        <i class="bi bi-shield-check me-1"></i> This result has been digitally verified and saved.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>

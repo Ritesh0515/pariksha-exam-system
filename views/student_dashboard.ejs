@@ -6,71 +6,117 @@
     <title>Student Dashboard | Pariksha</title>
     <style>
         .student-navbar {
-            background-color: #2563eb;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
-        .hero-section {
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        /* Modern ID Card Styling */
+        .id-card-wrapper {
+            background: white;
             border-radius: 24px;
-            padding: 40px;
-            margin-bottom: 40px;
-        }
-
-        .exam-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 20px;
+            border: 1px solid var(--border-color);
             overflow: hidden;
-            border: 1px solid #eef2f7;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         }
 
-        .exam-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.1) !important;
-        }
-
-        .subject-badge {
-            background-color: rgba(37, 99, 235, 0.1);
-            color: #2563eb;
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .start-btn {
-            border-radius: 12px;
-            padding: 10px;
-            font-weight: 600;
-            transition: 0.3s;
-        }
-
-        .profile-container {
-            position: relative;
-            display: inline-block;
-        }
-
-        .camera-overlay {
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            background: #2563eb;
+        .id-card-header {
+            background: linear-gradient(to right, var(--primary-blue), #2563eb);
+            padding: 12px 30px;
             color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+        }
+
+        .profile-section {
+            background-color: #f8fafc;
+            padding: 40px 30px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .profile-img-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 0 auto;
+        }
+
+        .profile-img-container img, .profile-placeholder {
+            width: 140px;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 20px; 
+            border: 5px solid white;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .profile-placeholder {
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+        }
+
+        .camera-btn {
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
+            background: var(--primary-blue);
+            color: white;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            border: 2px solid white;
-            transition: 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 3px solid white;
+            transition: 0.3s;
         }
 
-        .camera-overlay:hover {
-            background: #1d4ed8;
+        .camera-btn:hover {
+            background: var(--primary-hover);
             transform: scale(1.1);
+        }
+
+        .info-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .hero-section {
+            background: #eff6ff;
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px dashed var(--primary-blue);
+        }
+
+        .exam-card {
+            transition: all 0.3s ease;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .exam-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(30, 58, 138, 0.1) !important;
+            border-color: var(--primary-blue);
+        }
+
+        .start-btn {
+            background-color: var(--primary-blue);
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 12px;
         }
     </style>
 </head>
@@ -80,78 +126,68 @@
     <nav class="navbar navbar-expand-lg navbar-dark student-navbar py-3">
         <div class="container">
             <a class="navbar-brand fw-bold d-flex align-items-center" href="/student/dashboard">
-                <div class="bg-white text-primary rounded-circle p-1 me-2 d-flex align-items-center justify-content-center"
-                    style="width: 32px; height: 32px;">
-                    <i class="bi bi-pen-fill fs-6"></i>
-                </div>
-                Pariksha
+                <i class="bi bi-mortarboard-fill me-2"></i> Pariksha
             </a>
 
             <div class="ms-auto d-flex align-items-center">
-                <div class="text-white me-4 d-none d-md-block text-end">
-                    <span class="opacity-75 small">Student Portal</span>
-                    <div class="fw-bold">
-                        <%= user.first_name %> <%= user.last_name %>
-                    </div>
-                </div>
                 <div class="btn-group shadow-sm rounded-pill bg-white p-1">
-                    <a href="/student/history" class="btn btn-sm px-3 fw-bold text-dark border-0 rounded-pill">
-                        <i class="bi bi-clock-history me-1"></i> History
-                    </a>
-                    <a href="/logout" class="btn btn-sm px-3 fw-bold btn-danger rounded-pill border-0">
-                        Logout
-                    </a>
+                    <a href="/student/history" class="btn btn-sm px-3 fw-bold text-primary border-0">History</a>
+                    <a href="/logout" class="btn btn-sm px-3 fw-bold btn-danger rounded-pill border-0">Logout</a>
                 </div>
             </div>
         </div>
     </nav>
 
     <div class="container py-5">
-
-        <div class="card mb-5 rounded-4 shadow-sm border-0" style="border-top: 6px solid #2563eb !important;">
-            <div class="card-body p-4">
+        
+        <div class="id-card-wrapper mb-5">
+            <div class="id-card-header">
+                <span class="small fw-bold text-uppercase tracking-widest">Student Identification Card</span>
+            </div>
+            
+            <div class="profile-section">
                 <div class="row align-items-center">
-                    <div class="col-md-3 text-center border-md-end">
-                        <form id="profilePicForm" action="/student/upload-profile" method="POST" enctype="multipart/form-data">
-                            <div class="profile-container mb-2">
-                                <% if (user.profile_pic) { %>
-                                    <img src="/uploads/profile_pics/<%= user.profile_pic %>" alt="Profile"
-                                        class="rounded-circle border shadow-sm"
-                                        style="width: 130px; height: 130px; object-fit: cover; border: 4px solid #fff !important;">
+                    <div class="col-md-3 text-center mb-4 mb-md-0">
+                        <form action="/student/upload-profile" method="POST" enctype="multipart/form-data">
+                            <div class="profile-img-container">
+                                <% if (user.profile_pic && user.profile_pic !== 'null') { %>
+                                    <img src="/uploads/profile_pics/<%= user.profile_pic %>" alt="Profile">
                                 <% } else { %>
-                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center border shadow-sm"
-                                        style="width: 130px; height: 130px;">
-                                        <i class="bi bi-person-fill text-secondary opacity-50" style="font-size: 4.5rem;"></i>
+                                    <div class="profile-placeholder">
+                                        <i class="bi bi-person-fill" style="font-size: 4rem;"></i>
                                     </div>
                                 <% } %>
-                                
-                                <input type="file" id="profilePicInput" name="profile_pic" accept="image/*" class="d-none" onchange="this.form.submit()">
-                                <label for="profilePicInput" class="camera-overlay shadow-sm" title="Change Photo">
+                                <input type="file" id="picInput" name="profile_pic" class="d-none" onchange="this.form.submit()">
+                                <label for="picInput" class="camera-btn shadow-sm" title="Upload Photo">
                                     <i class="bi bi-camera-fill"></i>
                                 </label>
                             </div>
-                            <p class="small text-muted mb-0 mt-2">Student Profile</p>
                         </form>
                     </div>
 
-                    <div class="col-md-9 ps-md-5">
-                        <div class="d-flex align-items-center mb-4 mt-3 mt-md-0">
-                            <h2 class="fw-bold text-dark mb-0"><%= user.first_name %> <%= user.last_name %></h2>
-                            <span class="badge bg-primary bg-opacity-10 text-primary ms-3 rounded-pill px-3 border border-primary-subtle">Student</span>
-                        </div>
-                        
+                    <div class="col-md-9 ps-md-4">
                         <div class="row g-4">
-                            <div class="col-sm-4">
-                                <label class="small text-uppercase text-muted fw-bold d-block mb-1">Roll Number</label>
-                                <span class="fs-5 fw-bold text-dark"><%= user.roll_no || 'Pending Assignment' %></span>
+                            <div class="col-12 mb-2">
+                                <h2 class="fw-bold text-dark mb-0"><%= user.first_name %> <%= user.last_name %></h2>
+                                <p class="text-primary fw-semibold mb-0">Authorized Student Access</p>
                             </div>
-                            <div class="col-sm-4">
-                                <label class="small text-uppercase text-muted fw-bold d-block mb-1">Course</label>
-                                <span class="fs-5 fw-bold text-dark"><%= user.class_name %></span>
+                            <div class="col-6 col-md-4">
+                                <div class="info-label">Roll Number</div>
+                                <div class="info-value">
+                                    <% if (user.roll_no) { %>
+                                        <%= user.roll_no %>
+                                    <% } else { %>
+                                        <span class="text-warning small"><i class="bi bi-exclamation-circle me-1"></i>Not Assigned Yet</span>
+                                    <% } %>
+                                </div>
                             </div>
-                            <div class="col-sm-4">
-                                <label class="small text-uppercase text-muted fw-bold d-block mb-1">Academic Year</label>
-                                <span class="fs-5 fw-bold text-dark"><%= user.year_code %></span>
+                            <div class="col-6 col-md-4">
+                                <div class="info-label">Current Course</div>
+                                <div class="info-value"><%= user.class_name %></div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="info-label">Academic Year</div>
+                                <div class="info-value"><%= user.year_code %></div>
                             </div>
                         </div>
                     </div>
@@ -159,73 +195,47 @@
             </div>
         </div>
 
-        <div class="hero-section shadow-sm border border-white">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h1 class="fw-bold text-dark mb-2">Hello, <%= user.first_name %>! 👋</h1>
-                    <p class="text-muted fs-5 mb-0">Ready for your assessments? Select your course exam below.</p>
-                </div>
-                <div class="col-md-4 text-center d-none d-md-block">
-                    <i class="bi bi-mortarboard text-primary opacity-25" style="font-size: 6rem;"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="d-flex align-items-center mb-4">
-            <h3 class="fw-bold text-dark mb-0">Available Exams</h3>
-            <span class="ms-3 badge bg-dark rounded-pill">
-                <%= exams.length %> Total for <%= user.class_name %>
-            </span>
+        <div class="hero-section mb-5 shadow-sm">
+            <h1 class="fw-bold text-dark mb-2">Welcome back, <%= user.first_name %>!</h1>
+            <p class="text-muted mb-0">Here are your active examinations for <strong><%= user.year_code %> <%= user.class_name %></strong>.</p>
         </div>
 
         <div class="row">
             <% if (exams.length === 0) { %>
                 <div class="col-12 text-center py-5">
-                    <div class="bg-white rounded-4 p-5 shadow-sm border">
-                        <i class="bi bi-calendar-check display-1 text-muted opacity-25"></i>
-                        <h4 class="mt-4 fw-bold">No exams scheduled!</h4>
-                        <p class="text-muted">There are currently no exams assigned to your Course/Year. Check back later or contact admin.</p>
-                        <a href="/student/history" class="btn btn-outline-primary rounded-pill mt-2">View Previous Results</a>
+                    <div class="card p-5 border-0 rounded-4 shadow-sm bg-white">
+                        <i class="bi bi-calendar-x text-muted opacity-25 display-1 mb-3"></i>
+                        <h4 class="fw-bold text-dark">No Exams Scheduled</h4>
+                        <p class="text-muted">There are no assessments assigned to your course at the moment.</p>
                     </div>
                 </div>
             <% } else { %>
                 <% exams.forEach(exam => { %>
                     <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card exam-card h-100 border-0 shadow-sm bg-white">
-                            <div class="card-body p-4 d-flex flex-column">
-                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                    <span class="badge subject-badge px-3 py-2">
-                                        <i class="bi bi-book me-1"></i>
-                                        <%= exam.subject_name %>
-                                    </span>
-                                    <div class="text-muted small fw-bold">
-                                        <i class="bi bi-alarm me-1 text-primary"></i>
-                                        <%= exam.duration_minutes %> mins
-                                    </div>
+                        <div class="card exam-card h-100 border-0 shadow-sm bg-white p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="badge px-3 py-2" style="background: #eff6ff; color: var(--primary-blue);">
+                                    <%= exam.subject_name %>
+                                </span>
+                                <span class="small fw-bold text-muted"><i class="bi bi-clock me-1"></i><%= exam.duration_minutes %>m</span>
+                            </div>
+                            <h4 class="fw-bold text-dark mb-4"><%= exam.exam_name %></h4>
+                            
+                            <div class="row g-2 mb-4 bg-light rounded-3 p-3 text-center">
+                                <div class="col-6 border-end">
+                                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.6rem;">Max Marks</div>
+                                    <div class="fw-bold"><%= exam.total_marks %></div>
                                 </div>
-
-                                <h4 class="fw-bold text-dark mb-3">
-                                    <%= exam.exam_name %>
-                                </h4>
-
-                                <div class="bg-light rounded-3 p-3 mb-4">
-                                    <div class="row g-0">
-                                        <div class="col-6 border-end">
-                                            <div class="small text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Max Marks</div>
-                                            <div class="fw-bold text-dark"><%= exam.total_marks %></div>
-                                        </div>
-                                        <div class="col-6 ps-3">
-                                            <div class="small text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Pass Criteria</div>
-                                            <div class="fw-bold text-success"><%= exam.pass_marks %></div>
-                                        </div>
-                                    </div>
+                                <div class="col-6">
+                                    <div class="small text-muted fw-bold text-uppercase" style="font-size: 0.6rem;">Pass Marks</div>
+                                    <div class="fw-bold text-success"><%= exam.pass_marks %></div>
                                 </div>
+                            </div>
 
-                                <div class="mt-auto">
-                                    <a href="/student/exam/<%= exam.exam_id %>/start" class="btn btn-primary w-100 start-btn shadow-sm">
-                                        Start Assessment <i class="bi bi-arrow-right-short fs-5 ms-1"></i>
-                                    </a>
-                                </div>
+                            <div class="mt-auto">
+                                <a href="/student/exam/<%= exam.exam_id %>/start" class="btn btn-primary w-100 start-btn shadow-sm text-white text-decoration-none d-block text-center">
+                                    Start Now <i class="bi bi-chevron-right ms-1"></i>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -236,5 +246,4 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>

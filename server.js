@@ -280,6 +280,11 @@ app.get('/api/subjects-filter', async (req, res) => {
 
 // --- QUESTION MANAGEMENT ---
 app.get('/admin/exams/:examId/questions', async (req, res) => {
+  // 1. ADDED SECURITY: Make sure they are logged in and an admin/staff
+  if (!req.session.user || !isAdmin(req.session.user.role)) {
+    return res.redirect('/login')
+  }
+
   try {
     const [exam] = await db.query('SELECT * FROM exams WHERE exam_id = ?', [
       req.params.examId,
@@ -288,12 +293,17 @@ app.get('/admin/exams/:examId/questions', async (req, res) => {
       'SELECT * FROM questions WHERE exam_id = ?',
       [req.params.examId],
     )
-    res.render('admin_questions', { exam: exam[0], questions })
+    
+    // 2. THE FIX: Pass the user object to the EJS template
+    res.render('admin_questions', { 
+      exam: exam[0], 
+      questions: questions,
+      user: req.session.user  // <--- This line stops the crash!
+    })
   } catch (err) {
     res.status(500).send('Error loading questions')
   }
 })
-
 app.post('/admin/exams/:examId/questions/add', async (req, res) => {
   const {
     question_text,
@@ -682,9 +692,9 @@ app.get('/student/dashboard', async (req, res) => {
     try {
         const userId = req.session.user.user_id;
         
-        // 1. Get the latest student info (Course/Year)
+        // ADDED 'roll_no' TO THE SELECT QUERY BELOW
         const [[user]] = await db.query(
-            "SELECT first_name, last_name, class_name, year_code, profile_pic FROM users WHERE user_id = ?", 
+            "SELECT first_name, last_name, class_name, year_code, profile_pic, roll_no FROM users WHERE user_id = ?", 
             [userId]
         );
 
@@ -698,7 +708,7 @@ app.get('/student/dashboard', async (req, res) => {
         `, [user.class_name, user.year_code]);
 
         res.render('student_dashboard', {
-            user: user,
+            user: user, // Now includes roll_no
             exams: exams,
             activeExamId: req.session.currentExamId || null
         });

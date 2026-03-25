@@ -3,52 +3,80 @@
 
 <head>
     <%- include('partials/head') %>
-        <title>Student Registration | Pariksha</title>
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <style>
-            body {
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
-                margin: 0;
-                padding: 20px 0;
-            }
+    <title>Student Registration | Pariksha</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Matched the background gradient to the login page */
+            background: linear-gradient(135deg, #0f172a 0%, var(--primary-blue) 100%);
+            margin: 0;
+            padding: 40px 0;
+            font-family: 'Inter', sans-serif;
+        }
 
-            .signup-card {
-                max-width: 500px;
-                width: 90%;
-                border-radius: 24px;
-                border: none;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            }
+        .signup-card {
+            max-width: 550px;
+            width: 90%;
+            border-radius: 24px;
+            border: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
 
-            .brand-logo {
-                font-size: 2.2rem;
-                font-weight: 800;
-                color: #2563eb;
-                letter-spacing: -1.5px;
-            }
+        .signup-card:hover {
+            transform: translateY(-5px);
+        }
 
-            .form-control:focus,
-            .form-select:focus {
-                background-color: #fff !important;
-                border: 1px solid #2563eb !important;
-                box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-            }
+        .brand-logo {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--primary-blue); /* Themed */
+            letter-spacing: -1px;
+        }
 
-            .btn-primary {
-                background-color: #2563eb;
-                border: none;
-                transition: all 0.3s ease;
-            }
+        /* Unified input group focus styling from login.ejs */
+        .input-group:focus-within {
+            box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.15);
+            border-radius: 8px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #fff !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+        }
 
-            /* Style for the select dropdown to match your inputs */
-            .form-select {
-                cursor: pointer;
-            }
-        </style>
+        .input-group-text {
+            background-color: #f8fafc;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-blue); /* Themed */
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.3);
+        }
+
+        .form-select {
+            cursor: pointer;
+        }
+        
+        .year-radio-container {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            background-color: #f8fafc;
+        }
+    </style>
 </head>
 
 <body>
@@ -62,66 +90,66 @@
         <form action="/signup" method="POST" id="registrationForm">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">First
-                        Name</label>
-                    <input type="text" name="first_name" class="form-control bg-light border-0 py-2" placeholder="John"
-                        required>
+                    <label class="form-label small fw-bold text-dark mb-2">First Name</label>
+                    <div class="input-group border rounded-3 overflow-hidden">
+                        <span class="input-group-text border-0 text-muted px-3"><i class="bi bi-person"></i></span>
+                        <input type="text" name="first_name" class="form-control bg-light border-0 py-2" placeholder="John" required>
+                    </div>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Last
-                        Name</label>
-                    <input type="text" name="last_name" class="form-control bg-light border-0 py-2" placeholder="Doe"
-                        required>
+                    <label class="form-label small fw-bold text-dark mb-2">Last Name</label>
+                    <div class="input-group border rounded-3 overflow-hidden">
+                        <span class="input-group-text border-0 text-muted px-3"><i class="bi bi-person"></i></span>
+                        <input type="text" name="last_name" class="form-control bg-light border-0 py-2" placeholder="Doe" required>
+                    </div>
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Email
-                    Address</label>
-                <input type="email" name="email" class="form-control bg-light border-0 py-2"
-                    placeholder="name@college.edu" required>
+                <label class="form-label small fw-bold text-dark mb-2">Email Address</label>
+                <div class="input-group border rounded-3 overflow-hidden">
+                    <span class="input-group-text border-0 text-muted px-3"><i class="bi bi-envelope"></i></span>
+                    <input type="email" name="email" class="form-control bg-light border-0 py-2" placeholder="student@example.edu" required>
+                </div>
             </div>
 
-            <div class="mb-4">
-                <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Select Course /
-                    Class</label>
-                <select name="class_name" class="form-select bg-light border-0 py-2" required>
-                    <option value="" selected disabled>Choose your academic department...</option>
-                    <% if (courses && courses.length> 0) { %>
-                        <% courses.forEach(course=> { %>
-                            <option value="<%= course.course_name %>">
-                                <%= course.course_name %>
-                            </option>
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-dark mb-2">Select Course / Class</label>
+                <div class="input-group border rounded-3 overflow-hidden">
+                    <span class="input-group-text border-0 text-muted px-3"><i class="bi bi-mortarboard"></i></span>
+                    <select name="class_name" class="form-select bg-light border-0 py-2" required>
+                        <option value="" selected disabled>Choose your academic department...</option>
+                        <% if (courses && courses.length > 0) { %>
+                            <% courses.forEach(course => { %>
+                                <option value="<%= course.course_name %>"><%= course.course_name %></option>
                             <% }) %>
-                                <% } else { %>
-                                    <option disabled>No courses available. Contact Admin.</option>
-                                    <% } %>
-                </select>
-                <div class="form-text x-small text-muted">Pick the course you are currently enrolled in.</div>
+                        <% } else { %>
+                            <option disabled>No courses available. Contact Admin.</option>
+                        <% } %>
+                    </select>
+                </div>
             </div>
 
             <div class="mb-4">
-                <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Academic
-                    Year</label>
-                <div class="border rounded p-3 bg-light">
-                    <div class="row">
-                        <div class="col-4 text-center">
-                            <div class="form-check d-flex justify-content-center align-items-center">
-                                <input class="form-check-input" type="radio" name="year_code" id="fy" value="FY" checked
-                                    required>
-                                <label class="form-check-label ms-2" for="fy">FY (First Year)</label>
+                <label class="form-label small fw-bold text-dark mb-2">Academic Year</label>
+                <div class="year-radio-container">
+                    <div class="row g-2">
+                        <div class="col-12 col-md-4">
+                            <div class="form-check d-flex align-items-center mb-0">
+                                <input class="form-check-input mt-0" type="radio" name="year_code" id="fy" value="FY" checked required>
+                                <label class="form-check-label ms-2 small fw-medium" for="fy">First Year</label>
                             </div>
                         </div>
-                        <div class="col-4 text-center">
-                            <div class="form-check d-flex justify-content-center align-items-center">
-                                <input class="form-check-input" type="radio" name="year_code" id="sy" value="SY">
-                                <label class="form-check-label ms-2" for="sy">SY (Second Year)</label>
+                        <div class="col-12 col-md-4">
+                            <div class="form-check d-flex align-items-center mb-0">
+                                <input class="form-check-input mt-0" type="radio" name="year_code" id="sy" value="SY">
+                                <label class="form-check-label ms-2 small fw-medium" for="sy">Second Year</label>
                             </div>
                         </div>
-                        <div class="col-4 text-center">
-                            <div class="form-check d-flex justify-content-center align-items-center">
-                                <input class="form-check-input" type="radio" name="year_code" id="ty" value="TY">
-                                <label class="form-check-label ms-2" for="ty">TY (Third Year)</label>
+                        <div class="col-12 col-md-4">
+                            <div class="form-check d-flex align-items-center mb-0">
+                                <input class="form-check-input mt-0" type="radio" name="year_code" id="ty" value="TY">
+                                <label class="form-check-label ms-2 small fw-medium" for="ty">Third Year</label>
                             </div>
                         </div>
                     </div>
@@ -129,13 +157,14 @@
             </div>
 
             <div class="mb-4">
-                <label class="form-label small fw-bold text-uppercase" style="letter-spacing: 0.5px;">Create
-                    Password</label>
-                <input type="password" name="password" class="form-control bg-light border-0 py-2"
-                    placeholder="••••••••" required>
+                <label class="form-label small fw-bold text-dark mb-2">Create Password</label>
+                <div class="input-group border rounded-3 overflow-hidden">
+                    <span class="input-group-text border-0 text-muted px-3"><i class="bi bi-lock"></i></span>
+                    <input type="password" name="password" class="form-control bg-light border-0 py-2" placeholder="••••••••" required>
+                </div>
             </div>
 
-            <button type="submit" id="signupBtn" class="btn btn-primary w-100 py-3 fw-bold shadow-sm rounded-3">
+            <button type="submit" id="signupBtn" class="btn btn-primary w-100 py-3 fw-bold shadow-sm rounded-3 fs-6">
                 <span id="btnText">Register Student</span>
                 <div id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></div>
                 <i id="btnIcon" class="bi bi-person-plus-fill ms-2"></i>
@@ -143,8 +172,7 @@
         </form>
 
         <div class="mt-4 text-center">
-            <p class="small text-muted mb-0">Already have an account? <a href="/login"
-                    class="text-primary fw-bold text-decoration-none">Sign In</a></p>
+            <p class="small text-muted mb-0">Already have an account? <a href="/login" class="fw-bold text-decoration-none" style="color: var(--primary-blue);">Sign In</a></p>
         </div>
     </div>
 
@@ -154,6 +182,7 @@
         const btnText = document.getElementById('btnText');
         const btnSpinner = document.getElementById('btnSpinner');
         const btnIcon = document.getElementById('btnIcon');
+        const themeColor = '#1E3A8A'; // For SweetAlert
 
         // Handle the Loading State on Submit
         signupForm.addEventListener('submit', function () {
@@ -170,8 +199,9 @@
                 icon: 'warning',
                 title: 'Account Exists',
                 text: 'This email is already associated with an account. Please try logging in instead.',
-                confirmButtonColor: '#2563eb',
-                footer: '<a href="/login" style="color: #2563eb; text-decoration: none; font-weight: bold;">Go to Login Page</a>'
+                confirmButtonColor: themeColor, // Themed
+                footer: `<a href="/login" style="color: ${themeColor}; text-decoration: none; font-weight: bold;">Go to Login Page</a>`,
+                customClass: { popup: 'rounded-4' }
             });
             window.history.replaceState({}, document.title, "/signup");
         }
