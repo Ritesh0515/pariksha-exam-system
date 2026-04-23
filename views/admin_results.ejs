@@ -41,6 +41,29 @@
             box-shadow: 0 12px 20px -5px rgba(30, 58, 138, 0.15);
         }
 
+        .analytics-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            background: #ffffff;
+            padding: 1rem;
+            height: 100%;
+        }
+
+        .analytics-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .analytics-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 0.2rem;
+        }
+
         /* Themed Breadcrumbs */
         .breadcrumb-item a {
             color: var(--primary-blue);
@@ -109,6 +132,61 @@
                 </div>
 
                 <div id="resultView" class="d-none">
+                    <div class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                <h6 class="fw-bold mb-0">Assessment Analytics Overview</h6>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="showExamView()">
+                                        <i class="bi bi-arrow-left me-1"></i> Back to Exams
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="exportSelectedResultsCSV()">
+                                        <i class="bi bi-download me-1"></i> Export CSV
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-3">
+                                    <div class="analytics-card">
+                                        <div class="analytics-label">Participation Rate</div>
+                                        <div class="analytics-value" id="participationValue">0%</div>
+                                        <div class="small text-muted" id="participationMeta">0 of 0 students attempted</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="analytics-card">
+                                        <div class="analytics-label">Average Score</div>
+                                        <div class="analytics-value" id="avgScoreValue">0%</div>
+                                        <div class="small text-muted">Mean performance of attempts</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="analytics-card">
+                                        <div class="analytics-label">Pass Ratio</div>
+                                        <div class="analytics-value text-success" id="passRatioValue">0%</div>
+                                        <div class="small text-muted" id="passRatioMeta">0 passed</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="analytics-card">
+                                        <div class="analytics-label">Set Mix (A / B)</div>
+                                        <div class="analytics-value" id="setMixValue">0 / 0</div>
+                                        <div class="small text-muted">Attempts by question set</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between small fw-semibold text-muted mb-1">
+                                    <span>Pass vs Fail</span>
+                                    <span id="passFailLabel">0% / 0%</span>
+                                </div>
+                                <div class="progress" style="height: 12px;">
+                                    <div id="passBar" class="progress-bar bg-success" style="width: 0%"></div>
+                                    <div id="failBar" class="progress-bar bg-danger" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="card border-0 shadow-sm overflow-hidden rounded-4">
                         <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                             <h5 class="fw-bold mb-0" id="tableTitle">Students Marksheet</h5>
@@ -122,6 +200,7 @@
                                     <tr>
                                         <th class="ps-4 py-3 border-0">Student Details</th>
                                         <th class="border-0 text-center">Marks Obtained</th>
+                                        <th class="border-0 text-center">Set</th>
                                         <th class="border-0">Submission Time</th>
                                         <th class="text-end pe-4 border-0">Result Status</th>
                                     </tr>
@@ -144,6 +223,7 @@
         let selectedCourse = null;
         let selectedYear = null;
         let selectedExam = null;
+        let currentResultRows = [];
 
         // Navigation Controllers
         function updateBreadcrumb() {
@@ -281,8 +361,45 @@
                 r.year_code === selectedYear && 
                 r.exam_name === selectedExam
             );
+            currentResultRows = rows;
             const body = document.getElementById('resultTableBody');
             body.innerHTML = '';
+
+            // Analytics calculation
+            const totalAttempts = rows.length;
+            const passedCount = rows.filter(r => r.status === 'PASSED').length;
+            const failedCount = totalAttempts - passedCount;
+            const passRatio = totalAttempts ? (passedCount / totalAttempts) * 100 : 0;
+            const failRatio = totalAttempts ? (failedCount / totalAttempts) * 100 : 0;
+            const avgScorePercent = totalAttempts
+                ? rows.reduce((sum, r) => sum + ((Number(r.score) / Math.max(1, Number(r.total_questions))) * 100), 0) / totalAttempts
+                : 0;
+            const setACount = rows.filter(r => (r.question_set || 'A') === 'A').length;
+            const setBCount = rows.filter(r => (r.question_set || 'A') === 'B').length;
+            const enrolledCount = new Set(
+                resultsData
+                    .filter(r => r.class_name === selectedCourse && r.year_code === selectedYear)
+                    .map(r => `${r.class_name}-${r.year_code}-${r.roll_no || r.user_id}`)
+            ).size;
+            const participationRate = enrolledCount ? (totalAttempts / enrolledCount) * 100 : 0;
+
+            document.getElementById('participationValue').innerText = `${participationRate.toFixed(1)}%`;
+            document.getElementById('participationMeta').innerText = `${totalAttempts} of ${enrolledCount || totalAttempts} students attempted`;
+            document.getElementById('avgScoreValue').innerText = `${avgScorePercent.toFixed(1)}%`;
+            document.getElementById('passRatioValue').innerText = `${passRatio.toFixed(1)}%`;
+            document.getElementById('passRatioMeta').innerText = `${passedCount} passed, ${failedCount} failed`;
+            document.getElementById('setMixValue').innerText = `${setACount} / ${setBCount}`;
+            document.getElementById('passFailLabel').innerText = `${passRatio.toFixed(1)}% / ${failRatio.toFixed(1)}%`;
+            document.getElementById('passBar').style.width = `${passRatio}%`;
+            document.getElementById('failBar').style.width = `${failRatio}%`;
+
+            fetch(`/api/admin/results-analytics?class_name=${encodeURIComponent(selectedCourse)}&year_code=${encodeURIComponent(selectedYear)}&exam_name=${encodeURIComponent(selectedExam)}`)
+                .then(response => response.ok ? response.json() : null)
+                .then(apiStats => {
+                    if (!apiStats) return;
+                    document.getElementById('avgScoreValue').innerText = `${Number(apiStats.averageScorePercent || 0).toFixed(1)}%`;
+                })
+                .catch(() => {});
             
             rows.forEach(r => {
                 const badgeClass = r.status === 'PASSED' ? 'bg-success' : 'bg-danger';
@@ -302,6 +419,11 @@
                         <td class="text-center">
                             <div class="fs-5 fw-bold text-dark">${r.score} <span class="text-muted fw-normal small">/ ${r.total_questions}</span></div>
                         </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2">
+                                Set ${r.question_set || 'A'}
+                            </span>
+                        </td>
                         <td>
                             <div class="small fw-medium">${subDate.toLocaleDateString()}</div>
                             <div class="text-muted small">${subDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
@@ -313,6 +435,62 @@
                         </td>
                     </tr>`;
             });
+        }
+
+        function exportSelectedResultsCSV() {
+            if (!currentResultRows || currentResultRows.length === 0) {
+                alert('No result data available to export for this exam.');
+                return;
+            }
+
+            const headers = [
+                'First Name',
+                'Last Name',
+                'Roll No',
+                'Course',
+                'Year',
+                'Exam',
+                'Question Set',
+                'Score',
+                'Total Questions',
+                'Status',
+                'Submitted At'
+            ];
+
+            const escapeCSV = (value) => {
+                const safe = String(value ?? '');
+                if (safe.includes(',') || safe.includes('"') || safe.includes('\n')) {
+                    return `"${safe.replace(/"/g, '""')}"`;
+                }
+                return safe;
+            };
+
+            const lines = [
+                headers.join(','),
+                ...currentResultRows.map(r => ([
+                    r.first_name,
+                    r.last_name,
+                    r.roll_no || 'N/A',
+                    r.class_name,
+                    r.year_code,
+                    r.exam_name,
+                    r.question_set || 'A',
+                    r.score,
+                    r.total_questions,
+                    r.status,
+                    r.submitted_at
+                ].map(escapeCSV).join(',')))
+            ];
+
+            const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${selectedCourse || 'course'}-${selectedYear || 'year'}-${selectedExam || 'exam'}-results.csv`.replace(/\s+/g, '_');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
         showCourseView();

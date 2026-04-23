@@ -24,6 +24,46 @@ require('dotenv').config()
 
 const app = express()
 
+let hasResultsQuestionSetColumn = false
+
+const ensureExamEnhancementSchema = async () => {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS exam_set_assignments (
+        assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        exam_id INT NOT NULL,
+        question_set VARCHAR(10) NOT NULL DEFAULT 'A',
+        assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_user_exam (user_id, exam_id)
+      )
+    `)
+
+    const [questionSetColumn] = await db.query(
+      "SHOW COLUMNS FROM questions LIKE 'question_set'",
+    )
+    if (questionSetColumn.length === 0) {
+      await db.query(
+        "ALTER TABLE questions ADD COLUMN question_set VARCHAR(10) NOT NULL DEFAULT 'A'",
+      )
+    }
+
+    const [resultSetColumn] = await db.query(
+      "SHOW COLUMNS FROM results LIKE 'question_set'",
+    )
+    if (resultSetColumn.length === 0) {
+      await db.query(
+        "ALTER TABLE results ADD COLUMN question_set VARCHAR(10) NULL DEFAULT NULL",
+      )
+      hasResultsQuestionSetColumn = true
+    } else {
+      hasResultsQuestionSetColumn = true
+    }
+  } catch (err) {
+    console.error('Schema enhancement warning:', err.message)
+  }
+}
+
 // 1. Middleware
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
@@ -46,12 +86,17 @@ const isAdmin = (role) => ['admin', 'staff'].includes(role)
 
 // Root Route
 app.get('/', (req, res) => {
-  res.redirect('/login')
+  res.render('index')
 })
 
 // Login Page
 app.get('/login', (req, res) => {
   res.render('login')
+})
+
+// Dedicated faculty entry point (shared auth view)
+app.get('/admin/login', (req, res) => {
+  res.redirect('/login')
 })
 
 // Handle Login
@@ -290,7 +335,7 @@ app.get('/admin/exams/:examId/questions', async (req, res) => {
       req.params.examId,
     ])
     const [questions] = await db.query(
-      'SELECT * FROM questions WHERE exam_id = ?',
+      'SELECT * FROM questions WHERE exam_id = ? ORDER BY question_set ASC, question_id ASC',
       [req.params.examId],
     )
     
@@ -312,10 +357,11 @@ app.post('/admin/exams/:examId/questions/add', async (req, res) => {
     option_c,
     option_d,
     correct_answer,
+    question_set,
   } = req.body
   try {
     await db.query(
-      'INSERT INTO questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_answer) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_answer, question_set) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
         req.params.examId,
         question_text,
@@ -324,6 +370,7 @@ app.post('/admin/exams/:examId/questions/add', async (req, res) => {
         option_c,
         option_d,
         correct_answer,
+        question_set || 'A',
       ],
     )
     res.redirect(`/admin/exams/${req.params.examId}/questions`)
@@ -359,13 +406,14 @@ app.post(
           row.c,
           row.d,
           row.correct,
+          (row.set || row.question_set || 'A').toUpperCase(),
         ])
       })
       .on('end', async () => {
         try {
           if (questions.length > 0) {
             // 2. Perform Bulk Insert
-            const query = `INSERT INTO questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_answer) VALUES ?`
+            const query = `INSERT INTO questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_answer, question_set) VALUES ?`
             await db.query(query, [questions])
           }
 
@@ -413,10 +461,11 @@ app.post('/admin/questions/update/:examId/:questionId', async (req, res) => {
     option_c,
     option_d,
     correct_answer,
+    question_set,
   } = req.body
   try {
     await db.query(
-      'UPDATE questions SET question_text=?, option_a=?, option_b=?, option_c=?, option_d=?, correct_answer=? WHERE question_id=?',
+      'UPDATE questions SET question_text=?, option_a=?, option_b=?, option_c=?, option_d=?, correct_answer=?, question_set=? WHERE question_id=?',
       [
         question_text,
         option_a,
@@ -424,6 +473,7 @@ app.post('/admin/questions/update/:examId/:questionId', async (req, res) => {
         option_c,
         option_d,
         correct_answer,
+        question_set || 'A',
         req.params.questionId,
       ],
     )
@@ -681,6 +731,57 @@ app.get('/admin/results', async (req, res) => {
   }
 })
 
+app.get('/api/admin/results-analytics', async (req, res) => {
+  if (!req.session.user || !isAdmin(req.session.user.role)) {
+    return res.status(401).json({ error: 'Unauthorized' })
+  }
+
+  const { class_name, year_code, exam_name } = req.query
+  if (!class_name || !year_code || !exam_name) {
+    return res.status(400).json({ error: 'class_name, year_code and exam_name are required' })
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT r.score, r.total_questions, r.status, COALESCE(r.question_set, 'A') AS question_set
+       FROM results r
+       JOIN exams e ON r.exam_id = e.exam_id
+       JOIN users u ON r.user_id = u.user_id
+       WHERE u.class_name = ? AND u.year_code = ? AND e.exam_name = ?`,
+      [class_name, year_code, exam_name],
+    )
+
+    const totalAttempts = rows.length
+    const passedCount = rows.filter((r) => r.status === 'PASSED').length
+    const failedCount = totalAttempts - passedCount
+    const passRatio = totalAttempts ? (passedCount / totalAttempts) * 100 : 0
+    const failRatio = totalAttempts ? (failedCount / totalAttempts) * 100 : 0
+    const averageScorePercent = totalAttempts
+      ? rows.reduce(
+          (sum, r) =>
+            sum + (Number(r.score) / Math.max(1, Number(r.total_questions))) * 100,
+          0,
+        ) / totalAttempts
+      : 0
+    const setACount = rows.filter((r) => r.question_set === 'A').length
+    const setBCount = rows.filter((r) => r.question_set === 'B').length
+
+    res.json({
+      totalAttempts,
+      passedCount,
+      failedCount,
+      passRatio: Number(passRatio.toFixed(2)),
+      failRatio: Number(failRatio.toFixed(2)),
+      averageScorePercent: Number(averageScorePercent.toFixed(2)),
+      setACount,
+      setBCount,
+    })
+  } catch (err) {
+    console.error('Results analytics API error:', err)
+    res.status(500).json({ error: 'Failed to fetch analytics' })
+  }
+})
+
 // ==========================================
 // STUDENT ROUTES
 // ==========================================
@@ -780,11 +881,51 @@ app.get('/student/exam/:examId/start', async (req, res) => {
       [examId],
     )
 
+    const [setAvailability] = await db.query(
+      'SELECT question_set, COUNT(*) AS total FROM questions WHERE exam_id = ? GROUP BY question_set',
+      [examId],
+    )
+    const availableSets = setAvailability.map((row) => row.question_set)
+    const normalizedAvailableSets = availableSets.length > 0 ? availableSets : ['A']
+
+    let assignedSet = normalizedAvailableSets[0]
+    const [existingAssignment] = await db.query(
+      'SELECT question_set FROM exam_set_assignments WHERE user_id = ? AND exam_id = ? LIMIT 1',
+      [userId, examId],
+    )
+
+    if (existingAssignment.length > 0) {
+      assignedSet = existingAssignment[0].question_set
+    } else {
+      const [assignmentLoad] = await db.query(
+        `SELECT question_set, COUNT(*) AS assignedCount
+         FROM exam_set_assignments
+         WHERE exam_id = ?
+         GROUP BY question_set`,
+        [examId],
+      )
+      const loadMap = {}
+      assignmentLoad.forEach((row) => {
+        loadMap[row.question_set] = Number(row.assignedCount || 0)
+      })
+      assignedSet = normalizedAvailableSets.reduce((bestSet, currentSet) => {
+        const currentLoad = loadMap[currentSet] ?? 0
+        const bestLoad = loadMap[bestSet] ?? 0
+        return currentLoad < bestLoad ? currentSet : bestSet
+      }, normalizedAvailableSets[0])
+
+      await db.query(
+        'INSERT INTO exam_set_assignments (user_id, exam_id, question_set) VALUES (?, ?, ?)',
+        [userId, examId, assignedSet],
+      )
+    }
+
     // 4. Render the Instructions Page (Not the exam yet!)
     res.render('student_exam_start', {
       user: req.session.user,
       exam: exam[0],
       qCount: qCount,
+      assignedSet: assignedSet,
     })
   } catch (err) {
     res.status(500).send('Error: ' + err.message)
@@ -818,9 +959,23 @@ app.get('/student/exam/:examId/attempt', async (req, res) => {
     ])
 
     // 4. Fetch all questions
+    let assignedSet = 'A'
+    const [existingAssignment] = await db.query(
+      'SELECT question_set FROM exam_set_assignments WHERE user_id = ? AND exam_id = ? LIMIT 1',
+      [userId, examId],
+    )
+    if (existingAssignment.length > 0) {
+      assignedSet = existingAssignment[0].question_set
+    } else {
+      await db.query(
+        'INSERT INTO exam_set_assignments (user_id, exam_id, question_set) VALUES (?, ?, ?)',
+        [userId, examId, assignedSet],
+      )
+    }
+
     const [questions] = await db.query(
-      'SELECT * FROM questions WHERE exam_id = ?',
-      [examId],
+      'SELECT * FROM questions WHERE exam_id = ? AND question_set = ?',
+      [examId, assignedSet],
     )
 
     // --- NEW: PERSISTENT TIMER LOGIC ---
@@ -842,6 +997,7 @@ app.get('/student/exam/:examId/attempt', async (req, res) => {
       user: req.session.user,
       exam: exam[0],
       questions: questions,
+      assignedSet: assignedSet,
       remainingSeconds: remainingSeconds, // PASS THIS TO THE EJS
     })
   } catch (err) {
@@ -856,9 +1012,18 @@ app.post('/student/exam/:examId/submit', async (req, res) => {
   const userId = req.session.user.user_id // Get the ID of the logged-in student
 
   try {
+    let assignedSet = 'A'
+    const [assignedRow] = await db.query(
+      'SELECT question_set FROM exam_set_assignments WHERE user_id = ? AND exam_id = ? LIMIT 1',
+      [userId, examId],
+    )
+    if (assignedRow.length > 0) {
+      assignedSet = assignedRow[0].question_set
+    }
+
     const [questions] = await db.query(
-      'SELECT question_id, correct_answer FROM questions WHERE exam_id = ?',
-      [examId],
+      'SELECT question_id, correct_answer FROM questions WHERE exam_id = ? AND question_set = ?',
+      [examId, assignedSet],
     )
     const [exam] = await db.query('SELECT * FROM exams WHERE exam_id = ?', [
       examId,
@@ -877,10 +1042,17 @@ app.post('/student/exam/:examId/submit', async (req, res) => {
     const status = score >= exam[0].pass_marks ? 'PASSED' : 'FAILED'
 
     // NEW: Save the result to the database
-    await db.query(
-      'INSERT INTO results (user_id, exam_id, score, total_questions, status) VALUES (?, ?, ?, ?, ?)',
-      [userId, examId, score, totalQuestions, status],
-    )
+    if (hasResultsQuestionSetColumn) {
+      await db.query(
+        'INSERT INTO results (user_id, exam_id, score, total_questions, status, question_set) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, examId, score, totalQuestions, status, assignedSet],
+      )
+    } else {
+      await db.query(
+        'INSERT INTO results (user_id, exam_id, score, total_questions, status) VALUES (?, ?, ?, ?, ?)',
+        [userId, examId, score, totalQuestions, status],
+      )
+    }
 
     delete req.session.examEndTime
     delete req.session.currentExamId
@@ -1048,6 +1220,8 @@ app.get('/admin/students/toggle-status/:id', async (req, res) => {
   }
 })
 
-app.listen(3000, () => {
-  console.log(`🚀 Pariksha running on http://localhost:3000`)
+ensureExamEnhancementSchema().finally(() => {
+  app.listen(3000, () => {
+    console.log(`🚀 Pariksha running on http://localhost:3000`)
+  })
 })

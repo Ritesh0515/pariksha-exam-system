@@ -128,7 +128,7 @@
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
                 <h5 class="fw-bold mb-0 text-dark"><%= exam.exam_name %></h5>
-                <small class="text-muted"><i class="bi bi-person-circle me-1"></i> <%= user.first_name %> <%= user.last_name %></small>
+                <small class="text-muted"><i class="bi bi-person-circle me-1"></i> <%= user.first_name %> <%= user.last_name %> &bull; Set <%= assignedSet || 'A' %></small>
             </div>
             <div class="timer-badge d-flex align-items-center">
                 <i class="bi bi-alarm-fill me-2" style="color: var(--primary-blue);"></i>

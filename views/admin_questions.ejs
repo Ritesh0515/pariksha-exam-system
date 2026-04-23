@@ -17,7 +17,12 @@
         .question-card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important; }
         .option-box { border: 1px solid #e2e8f0; border-radius: 8px; transition: all 0.2s ease; }
         .option-correct { background-color: #f0fdf4; border-color: #22c55e; color: #15803d; font-weight: 600; }
-        
+        .set-badge {
+            background-color: #e0e7ff;
+            color: #1E3A8A;
+            border: 1px solid #c7d2fe;
+            font-weight: 700;
+        }
         
     </style>
 </head>
@@ -76,6 +81,36 @@
                 </div>
             </div>
 
+            <%
+                const setCountMap = questions.reduce((acc, q) => {
+                    const key = (q.question_set || 'A').toUpperCase();
+                    acc[key] = (acc[key] || 0) + 1;
+                    return acc;
+                }, {});
+                const setACount = setCountMap['A'] || 0;
+                const setBCount = setCountMap['B'] || 0;
+                const hasSetImbalance = setACount === 0 || setBCount === 0;
+            %>
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h6 class="fw-bold mb-1">Question Set Coverage</h6>
+                        <p class="text-muted small mb-0">Set A: <strong><%= setACount %></strong> &bull; Set B: <strong><%= setBCount %></strong></p>
+                    </div>
+                    <% if (hasSetImbalance) { %>
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            One set is empty. Add questions to both sets for anti-cheat effectiveness.
+                        </span>
+                    <% } else { %>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                            <i class="bi bi-check-circle-fill me-1"></i>
+                            Balanced set coverage is available.
+                        </span>
+                    <% } %>
+                </div>
+            </div>
+
             <div class="row">
                 <% if (questions.length === 0) { %>
                     <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm">
@@ -96,6 +131,7 @@
                                     <h5 class="fw-bold text-dark mb-0 mt-1"><%= q.question_text %></h5>
                                 </div>
                                 <div class="d-flex align-items-center gap-1">
+                                    <span class="badge set-badge rounded-pill px-3 me-2">Set <%= q.question_set || 'A' %></span>
                                     <span class="badge bg-light text-dark border rounded-pill px-3 me-2">1 Mark</span>
                                     
                                     <button class="btn btn-sm btn-outline-primary border-0 rounded-circle" 
@@ -107,6 +143,7 @@
                                             data-c="<%= q.option_c %>"
                                             data-d="<%= q.option_d %>"
                                             data-correct="<%= q.correct_answer %>"
+                                            data-set="<%= q.question_set || 'A' %>"
                                             title="Edit">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
@@ -171,6 +208,13 @@
                             <option value="d">Option D</option>
                         </select>
                     </div>
+                    <div class="mt-3">
+                        <label class="form-label fw-bold mb-2">Question Set</label>
+                        <select name="question_set" class="form-select shadow-sm" required>
+                            <option value="A">Set A</option>
+                            <option value="B">Set B</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer border-0 p-4">
                     <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
@@ -209,6 +253,13 @@
                             <option value="d">Option D</option>
                         </select>
                     </div>
+                    <div class="mt-3">
+                        <label class="form-label fw-bold mb-2">Question Set</label>
+                        <select name="question_set" id="edit_q_set" class="form-select shadow-sm" required>
+                            <option value="A">Set A</option>
+                            <option value="B">Set B</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer border-0 p-4">
                     <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
@@ -229,6 +280,7 @@
         const c = button.getAttribute('data-c');
         const d = button.getAttribute('data-d');
         const correct = button.getAttribute('data-correct');
+        const questionSet = button.getAttribute('data-set') || 'A';
 
         document.getElementById('editQuestionForm').action = `/admin/questions/update/<%= exam.exam_id %>/${id}`;
         document.getElementById('edit_q_text').value = text;
@@ -237,6 +289,7 @@
         document.getElementById('edit_q_c').value = c;
         document.getElementById('edit_q_d').value = d;
         document.getElementById('edit_q_correct').value = correct;
+        document.getElementById('edit_q_set').value = questionSet;
         
         new bootstrap.Modal(document.getElementById('editQuestionModal')).show();
     }
