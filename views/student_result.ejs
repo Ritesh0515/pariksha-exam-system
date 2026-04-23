@@ -22,7 +22,6 @@
             border-bottom: 1px solid #f1f5f9;
         }
 
-        /* Enhanced Score Circle */
         .score-circle {
             width: 160px;
             height: 160px;
@@ -75,8 +74,7 @@
 <body class="bg-light">
     <div class="container py-5">
         <div class="row justify-content-center">
-            <div class="col-lg-5 col-md-8">
-                <div class="card result-card border-0 shadow-lg text-center animate__animated animate__fadeIn">
+            <div class="col-lg-6 col-md-8"> <div class="card result-card border-0 shadow-lg text-center animate__animated animate__fadeIn">
                     
                     <div class="result-header">
                         <div class="mb-3">
@@ -106,9 +104,9 @@
                         
                         <div class="px-2">
                             <% if (status === 'PASSED') { %>
-                                <p class="text-muted mb-0">Excellent work! You have successfully demonstrated your proficiency in this subject. Keep up the momentum.</p>
+                                <p class="text-muted mb-0">Excellent work! You have successfully demonstrated your proficiency. Keep up the momentum.</p>
                             <% } else { %>
-                                <p class="text-muted mb-0">Don't be discouraged. Review the course material and attempt the next scheduled assessment with more preparation.</p>
+                                <p class="text-muted mb-0">Don't be discouraged. Review the material and attempt the next assessment with better preparation.</p>
                             <% } %>
                         </div>
 
@@ -120,12 +118,19 @@
                             <div class="vr opacity-10"></div>
                             <div class="text-center">
                                 <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.6rem;">Out of</small>
-                                <span class="fw-bold text-dark fs-5"><%= total %> Marks</span>
+                                <span class="fw-bold text-dark fs-5"><%= total %></span>
                             </div>
                             <div class="vr opacity-10"></div>
                             <div class="text-center">
                                 <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.6rem;">Passing</small>
                                 <span class="fw-bold text-dark fs-5"><%= exam.pass_marks %></span>
+                            </div>
+                            <div class="vr opacity-10"></div>
+                            <div class="text-center">
+                                <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.6rem;">Attempted Set</small>
+                                <span class="badge bg-primary rounded-pill px-3 py-1 mt-1" style="font-size: 0.8rem; background-color: var(--primary-blue) !important;">
+                                    Set <%= assignedSet %>
+                                </span>
                             </div>
                         </div>
 
@@ -142,7 +147,7 @@
                 
                 <div class="text-center mt-4">
                     <p class="text-muted small">
-                        <i class="bi bi-shield-check me-1"></i> This result has been digitally verified and saved.
+                        <i class="bi bi-shield-check me-1"></i> Integrity verified. Attempted from <strong>Set <%= assignedSet %></strong> with randomized ordering.
                     </p>
                 </div>
             </div>

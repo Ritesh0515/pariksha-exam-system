@@ -53,7 +53,7 @@ const ensureExamEnhancementSchema = async () => {
     )
     if (resultSetColumn.length === 0) {
       await db.query(
-        "ALTER TABLE results ADD COLUMN question_set VARCHAR(10) NULL DEFAULT NULL",
+        'ALTER TABLE results ADD COLUMN question_set VARCHAR(10) NULL DEFAULT NULL',
       )
       hasResultsQuestionSetColumn = true
     } else {
@@ -147,82 +147,89 @@ app.get('/signup', async (req, res) => {
 })
 // Handle Signup
 app.post('/signup', async (req, res) => {
-    const { first_name, last_name, email, class_name, password, year_code } = req.body;
-    const username = `${first_name} ${last_name}`;
+  const { first_name, last_name, email, class_name, password, year_code } =
+    req.body
+  const username = `${first_name} ${last_name}`
 
-    try {
-        const [existing] = await db.query(
-            'SELECT user_id FROM users WHERE email = ?',
-            [email],
-        );
-        if (existing.length > 0) return res.redirect('/signup?error=exists');
+  try {
+    const [existing] = await db.query(
+      'SELECT user_id FROM users WHERE email = ?',
+      [email],
+    )
+    if (existing.length > 0) return res.redirect('/signup?error=exists')
 
-        const sql = `
+    const sql = `
             INSERT INTO users (username, first_name, last_name, email, password_hash, role, class_name, year_code, is_active) 
             VALUES (?, ?, ?, ?, SHA2(?, 256), 'student', ?, ?, 1)
-        `;
+        `
 
-        // Capture the result to get the new student's ID
-        const [result] = await db.query(sql, [
-            username,
-            first_name,
-            last_name,
-            email,
-            password,
-            class_name,
-            year_code,
-        ]);
+    // Capture the result to get the new student's ID
+    const [result] = await db.query(sql, [
+      username,
+      first_name,
+      last_name,
+      email,
+      password,
+      class_name,
+      year_code,
+    ])
 
-        // --- NEW: CREATE NOTIFICATION FOR ADMIN ---
-        const newStudentId = result.insertId;
-        const adminMessage = `New student ${first_name} ${last_name} has registered under the course ${class_name} (${year_code}). Action: Assign Roll Number.`;
-        
-        await db.query("INSERT INTO notifications (user_id, message) VALUES (?, ?)", [
-            newStudentId, 
-            adminMessage
-        ]);
+    // --- NEW: CREATE NOTIFICATION FOR ADMIN ---
+    const newStudentId = result.insertId
+    const adminMessage = `New student ${first_name} ${last_name} has registered under the course ${class_name} (${year_code}). Action: Assign Roll Number.`
 
-        res.redirect('/login?registered=true');
-    } catch (err) {
-        console.error('Signup Error:', err);
-        res.status(500).send('Registration failed');
-    }
-});
+    await db.query(
+      'INSERT INTO notifications (user_id, message) VALUES (?, ?)',
+      [newStudentId, adminMessage],
+    )
+
+    res.redirect('/login?registered=true')
+  } catch (err) {
+    console.error('Signup Error:', err)
+    res.status(500).send('Registration failed')
+  }
+})
 // --- ADMIN DASHBOARD ---
 app.get('/admin/dashboard', async (req, res) => {
-    if (!req.session.user || !isAdmin(req.session.user.role))
-        return res.redirect('/login');
+  if (!req.session.user || !isAdmin(req.session.user.role))
+    return res.redirect('/login')
 
-    try {
-        const [[{ examCount }]] = await db.query('SELECT COUNT(*) as examCount FROM exams');
-        const [[{ subjectCount }]] = await db.query('SELECT COUNT(*) as subjectCount FROM subjects');
-        const [[{ studentCount }]] = await db.query("SELECT COUNT(*) as studentCount FROM users WHERE role = 'student'");
-        
-        const [recentSubjects] = await db.query(
-            'SELECT subject_name FROM subjects ORDER BY subject_id DESC LIMIT 5'
-        );
+  try {
+    const [[{ examCount }]] = await db.query(
+      'SELECT COUNT(*) as examCount FROM exams',
+    )
+    const [[{ subjectCount }]] = await db.query(
+      'SELECT COUNT(*) as subjectCount FROM subjects',
+    )
+    const [[{ studentCount }]] = await db.query(
+      "SELECT COUNT(*) as studentCount FROM users WHERE role = 'student'",
+    )
 
-        // --- NEW: FETCH UNREAD NOTIFICATIONS ---
-        const [notifications] = await db.query(
-            "SELECT * FROM notifications WHERE is_read = 0 ORDER BY created_at DESC"
-        );
+    const [recentSubjects] = await db.query(
+      'SELECT subject_name FROM subjects ORDER BY subject_id DESC LIMIT 5',
+    )
 
-        res.render('admin_dashboard', {
-            user: req.session.user,
-            stats: {
-                exams: examCount || 0,
-                subjects: subjectCount || 0,
-                students: studentCount || 0,
-            },
-            activities: recentSubjects,
-            notifications: notifications, // Pass notifications to the EJS
-            currentPage: 'dashboard',
-        });
-    } catch (err) {
-        console.error('Dashboard Error:', err);
-        res.status(500).send('Dashboard Error');
-    }
-});
+    // --- NEW: FETCH UNREAD NOTIFICATIONS ---
+    const [notifications] = await db.query(
+      'SELECT * FROM notifications WHERE is_read = 0 ORDER BY created_at DESC',
+    )
+
+    res.render('admin_dashboard', {
+      user: req.session.user,
+      stats: {
+        exams: examCount || 0,
+        subjects: subjectCount || 0,
+        students: studentCount || 0,
+      },
+      activities: recentSubjects,
+      notifications: notifications, // Pass notifications to the EJS
+      currentPage: 'dashboard',
+    })
+  } catch (err) {
+    console.error('Dashboard Error:', err)
+    res.status(500).send('Dashboard Error')
+  }
+})
 
 // --- EXAM MANAGEMENT ---
 // --- EXAM MANAGEMENT ---
@@ -324,8 +331,9 @@ app.get('/api/subjects-filter', async (req, res) => {
 })
 
 // --- QUESTION MANAGEMENT ---
+
+// 1. VIEW QUESTIONS (Optimized with Set Sorting)
 app.get('/admin/exams/:examId/questions', async (req, res) => {
-  // 1. ADDED SECURITY: Make sure they are logged in and an admin/staff
   if (!req.session.user || !isAdmin(req.session.user.role)) {
     return res.redirect('/login')
   }
@@ -334,21 +342,25 @@ app.get('/admin/exams/:examId/questions', async (req, res) => {
     const [exam] = await db.query('SELECT * FROM exams WHERE exam_id = ?', [
       req.params.examId,
     ])
+
+    // Sorted by Set then ID so Admin sees Set A and Set B grouped together
     const [questions] = await db.query(
       'SELECT * FROM questions WHERE exam_id = ? ORDER BY question_set ASC, question_id ASC',
       [req.params.examId],
     )
-    
-    // 2. THE FIX: Pass the user object to the EJS template
-    res.render('admin_questions', { 
-      exam: exam[0], 
+
+    res.render('admin_questions', {
+      exam: exam[0],
       questions: questions,
-      user: req.session.user  // <--- This line stops the crash!
+      user: req.session.user,
     })
   } catch (err) {
+    console.error(err)
     res.status(500).send('Error loading questions')
   }
 })
+
+// 2. ADD SINGLE QUESTION (With Set Support)
 app.post('/admin/exams/:examId/questions/add', async (req, res) => {
   const {
     question_text,
@@ -364,13 +376,13 @@ app.post('/admin/exams/:examId/questions/add', async (req, res) => {
       'INSERT INTO questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_answer, question_set) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
         req.params.examId,
-        question_text,
-        option_a,
-        option_b,
-        option_c,
-        option_d,
+        question_text.trim(),
+        option_a.trim(),
+        option_b.trim(),
+        option_c.trim(),
+        option_d.trim(),
         correct_answer,
-        question_set || 'A',
+        (question_set || 'A').toUpperCase(),
       ],
     )
     res.redirect(`/admin/exams/${req.params.examId}/questions`)
@@ -379,80 +391,103 @@ app.post('/admin/exams/:examId/questions/add', async (req, res) => {
   }
 })
 
-// BULK UPLOAD QUESTIONS VIA CSV
+// 3. BULK UPLOAD (Enhanced mapping & Manual Set Override)
 app.post(
   '/admin/exams/:examId/questions/upload',
   upload.single('csvFile'),
   async (req, res) => {
-    const examId = req.params.examId
+    const examId = req.params.examId;
+    const defaultSetSelection = req.body.default_set; // Catch the choice from the dropdown
 
-    // Safety check for file
-    if (!req.file) return res.status(400).send('No file uploaded.')
+    if (!req.file) return res.status(400).send('No file uploaded.');
 
-    const filePath = req.file.path
-    const questions = []
+    const filePath = req.file.path;
+    const questions = [];
 
-    // 1. Parse the CSV file
     fs.createReadStream(filePath)
       .pipe(csv())
       .on('data', (row) => {
-        // Mapping CSV headers to Database columns
-        // Ensure your CSV has headers: text, a, b, c, d, correct
-        questions.push([
-          examId,
-          row.text,
-          row.a,
-          row.b,
-          row.c,
-          row.d,
-          row.correct,
-          (row.set || row.question_set || 'A').toUpperCase(),
-        ])
+        let assignedSet;
+
+        // LOGIC: If 'OVERRIDE' is selected, look at CSV columns. 
+        // Otherwise, force all questions to the selected Set (A or B).
+        if (defaultSetSelection === 'OVERRIDE') {
+          assignedSet = (row.set || row.question_set || row.group || 'A').toUpperCase();
+        } else {
+          assignedSet = (defaultSetSelection || 'A').toUpperCase();
+        }
+
+        // Basic validation: skip empty rows
+        if (row.text || row.question_text) {
+          questions.push([
+            examId,
+            (row.text || row.question_text).trim(),
+            (row.a || row.option_a).trim(),
+            (row.b || row.option_b).trim(),
+            (row.c || row.option_c).trim(),
+            (row.d || row.option_d).trim(),
+            (row.correct || row.correct_answer).toLowerCase(),
+            assignedSet,
+          ]);
+        }
       })
       .on('end', async () => {
         try {
           if (questions.length > 0) {
-            // 2. Perform Bulk Insert
-            const query = `INSERT INTO questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_answer, question_set) VALUES ?`
-            await db.query(query, [questions])
+            const query = `INSERT INTO questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_answer, question_set) VALUES ?`;
+            await db.query(query, [questions]);
           }
-
-          // 3. Clean up: Delete the temporary file
-          fs.unlinkSync(filePath)
-          res.redirect(`/admin/exams/${examId}/questions`)
+          
+          // Clean up the uploaded file
+          fs.unlinkSync(filePath);
+          res.redirect(`/admin/exams/${examId}/questions`);
         } catch (err) {
-          console.error('Bulk Upload Error:', err)
-          res.status(500).send('Error saving bulk questions: ' + err.message)
+          console.error('Bulk Upload Database Error:', err);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          res.status(500).send('Bulk Upload Error: ' + err.message);
         }
-      })
-  },
-)
+      });
+  }
+);
 
-// DELETE SINGLE QUESTION
-app.get('/admin/questions/delete/:examId/:questionId', async (req, res) => {
+// 4. DUPLICATE DETECTOR (Backend API)
+// You can call this via fetch() from your "Check Duplicates" button
+app.get('/api/admin/exams/:examId/duplicates', async (req, res) => {
   try {
-    await db.query('DELETE FROM questions WHERE question_id = ?', [
-      req.params.questionId,
-    ])
-    res.redirect(`/admin/exams/${req.params.examId}/questions`)
+    const query = `
+      SELECT question_text, COUNT(*) as count 
+      FROM questions 
+      WHERE exam_id = ? 
+      GROUP BY question_text 
+      HAVING count > 1`
+
+    const [duplicates] = await db.query(query, [req.params.examId])
+    res.json({ duplicates })
   } catch (err) {
-    res.status(500).send('Error deleting question: ' + err.message)
+    res.status(500).json({ error: err.message })
   }
 })
 
-// DELETE ALL QUESTIONS FOR AN EXAM
-app.get('/admin/questions/delete-all/:examId', async (req, res) => {
+// Add this in your QUESTION MANAGEMENT section
+app.post('/api/admin/exams/:examId/duplicates/cleanup', async (req, res) => {
   try {
-    await db.query('DELETE FROM questions WHERE exam_id = ?', [
-      req.params.examId,
-    ])
-    res.redirect(`/admin/exams/${req.params.examId}/questions`)
+    const examId = req.params.examId;
+    const query = `
+      DELETE q1 FROM questions q1
+      INNER JOIN questions q2 
+      WHERE q1.question_id > q2.question_id 
+      AND q1.question_text = q2.question_text 
+      AND q1.exam_id = ?`;
+    
+    const [result] = await db.query(query, [examId]);
+    res.json({ deletedCount: result.affectedRows });
   } catch (err) {
-    res.status(500).send('Error clearing question bank: ' + err.message)
+    console.error("SQL Error:", err);
+    res.status(500).json({ error: err.message });
   }
-})
+});
 
-// UPDATE SINGLE QUESTION
+// 5. UPDATE QUESTION
 app.post('/admin/questions/update/:examId/:questionId', async (req, res) => {
   const {
     question_text,
@@ -467,22 +502,33 @@ app.post('/admin/questions/update/:examId/:questionId', async (req, res) => {
     await db.query(
       'UPDATE questions SET question_text=?, option_a=?, option_b=?, option_c=?, option_d=?, correct_answer=?, question_set=? WHERE question_id=?',
       [
-        question_text,
-        option_a,
-        option_b,
-        option_c,
-        option_d,
+        question_text.trim(),
+        option_a.trim(),
+        option_b.trim(),
+        option_c.trim(),
+        option_d.trim(),
         correct_answer,
-        question_set || 'A',
+        (question_set || 'A').toUpperCase(),
         req.params.questionId,
       ],
     )
     res.redirect(`/admin/exams/${req.params.examId}/questions`)
   } catch (err) {
-    res.status(500).send('Error updating question: ' + err.message)
+    res.status(500).send('Error updating question')
   }
 })
 
+// 6. DELETE ROUTE (Single)
+app.get('/admin/questions/delete/:examId/:questionId', async (req, res) => {
+  try {
+    await db.query('DELETE FROM questions WHERE question_id = ?', [
+      req.params.questionId,
+    ])
+    res.redirect(`/admin/exams/${req.params.examId}/questions`)
+  } catch (err) {
+    res.status(500).send('Error deleting question')
+  }
+})
 // ==========================================
 // --- COURSE MANAGEMENT ---
 // ==========================================
@@ -738,7 +784,9 @@ app.get('/api/admin/results-analytics', async (req, res) => {
 
   const { class_name, year_code, exam_name } = req.query
   if (!class_name || !year_code || !exam_name) {
-    return res.status(400).json({ error: 'class_name, year_code and exam_name are required' })
+    return res
+      .status(400)
+      .json({ error: 'class_name, year_code and exam_name are required' })
   }
 
   try {
@@ -759,7 +807,8 @@ app.get('/api/admin/results-analytics', async (req, res) => {
     const averageScorePercent = totalAttempts
       ? rows.reduce(
           (sum, r) =>
-            sum + (Number(r.score) / Math.max(1, Number(r.total_questions))) * 100,
+            sum +
+            (Number(r.score) / Math.max(1, Number(r.total_questions))) * 100,
           0,
         ) / totalAttempts
       : 0
@@ -788,36 +837,40 @@ app.get('/api/admin/results-analytics', async (req, res) => {
 
 // Student Dashboard - Show available exams
 app.get('/student/dashboard', async (req, res) => {
-    if (!req.session.user || req.session.user.role !== 'student') return res.redirect('/login');
+  if (!req.session.user || req.session.user.role !== 'student')
+    return res.redirect('/login')
 
-    try {
-        const userId = req.session.user.user_id;
-        
-        // ADDED 'roll_no' TO THE SELECT QUERY BELOW
-        const [[user]] = await db.query(
-            "SELECT first_name, last_name, class_name, year_code, profile_pic, roll_no FROM users WHERE user_id = ?", 
-            [userId]
-        );
+  try {
+    const userId = req.session.user.user_id
 
-        // 2. Fetch exams ONLY if they belong to this student's Course and Year
-        const [exams] = await db.query(`
+    // ADDED 'roll_no' TO THE SELECT QUERY BELOW
+    const [[user]] = await db.query(
+      'SELECT first_name, last_name, class_name, year_code, profile_pic, roll_no FROM users WHERE user_id = ?',
+      [userId],
+    )
+
+    // 2. Fetch exams ONLY if they belong to this student's Course and Year
+    const [exams] = await db.query(
+      `
             SELECT e.*, s.subject_name 
             FROM exams e 
             JOIN subjects s ON e.subject_id = s.subject_id
             JOIN courses c ON s.course_id = c.course_id
             WHERE c.course_name = ? AND s.year = ?
-        `, [user.class_name, user.year_code]);
+        `,
+      [user.class_name, user.year_code],
+    )
 
-        res.render('student_dashboard', {
-            user: user, // Now includes roll_no
-            exams: exams,
-            activeExamId: req.session.currentExamId || null
-        });
-    } catch (err) {
-        console.error("Dashboard Error:", err);
-        res.status(500).send("Internal Server Error");
-    }
-});
+    res.render('student_dashboard', {
+      user: user, // Now includes roll_no
+      exams: exams,
+      activeExamId: req.session.currentExamId || null,
+    })
+  } catch (err) {
+    console.error('Dashboard Error:', err)
+    res.status(500).send('Internal Server Error')
+  }
+})
 
 // Handle student profile photo upload
 app.post(
@@ -886,7 +939,8 @@ app.get('/student/exam/:examId/start', async (req, res) => {
       [examId],
     )
     const availableSets = setAvailability.map((row) => row.question_set)
-    const normalizedAvailableSets = availableSets.length > 0 ? availableSets : ['A']
+    const normalizedAvailableSets =
+      availableSets.length > 0 ? availableSets : ['A']
 
     let assignedSet = normalizedAvailableSets[0]
     const [existingAssignment] = await db.query(
@@ -932,144 +986,163 @@ app.get('/student/exam/:examId/start', async (req, res) => {
   }
 })
 
+// Helper Function: Fisher-Yates Shuffle (Place this outside your route)
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 // Route to show the actual questions (The Attempt Page)
 app.get('/student/exam/:examId/attempt', async (req, res) => {
-  // 1. Security Check: Are they logged in as a student?
   if (!req.session.user || req.session.user.role !== 'student') {
-    return res.redirect('/login')
+    return res.redirect('/login');
   }
 
   try {
-    const examId = req.params.examId
-    const userId = req.session.user.user_id
+    const examId = req.params.examId;
+    const userId = req.session.user.user_id;
 
-    // 2. ONE-ATTEMPT RESTRICTION
+    // 1. ONE-ATTEMPT RESTRICTION
     const [existingResult] = await db.query(
       'SELECT result_id FROM results WHERE user_id = ? AND exam_id = ?',
-      [userId, examId],
-    )
+      [userId, examId]
+    );
 
     if (existingResult.length > 0) {
-      return res.redirect('/student/history')
+      return res.redirect('/student/history');
     }
 
-    // 3. Fetch exam details
-    const [exam] = await db.query('SELECT * FROM exams WHERE exam_id = ?', [
-      examId,
-    ])
+    // 2. Fetch exam details
+    const [exam] = await db.query('SELECT * FROM exams WHERE exam_id = ?', [examId]);
 
-    // 4. Fetch all questions
-    let assignedSet = 'A'
+    // 3. SET ASSIGNMENT LOGIC (A/B)
+    let assignedSet = 'A';
     const [existingAssignment] = await db.query(
       'SELECT question_set FROM exam_set_assignments WHERE user_id = ? AND exam_id = ? LIMIT 1',
-      [userId, examId],
-    )
+      [userId, examId]
+    );
+
     if (existingAssignment.length > 0) {
-      assignedSet = existingAssignment[0].question_set
+      assignedSet = existingAssignment[0].question_set;
     } else {
+      // Balance sets: Count A vs B and pick the smaller one (Optional but good)
       await db.query(
         'INSERT INTO exam_set_assignments (user_id, exam_id, question_set) VALUES (?, ?, ?)',
-        [userId, examId, assignedSet],
-      )
+        [userId, examId, assignedSet]
+      );
     }
 
-    const [questions] = await db.query(
-      'SELECT * FROM questions WHERE exam_id = ? AND question_set = ?',
-      [examId, assignedSet],
-    )
-
-    // --- NEW: PERSISTENT TIMER LOGIC ---
-    // If there is no end time in the session, or if the student switched to a different exam
+    // 4. PERSISTENT TIMER LOGIC
     if (!req.session.examEndTime || req.session.currentExamId !== examId) {
-      const durationInMs = exam[0].duration_minutes * 60 * 1000
-      req.session.examEndTime = Date.now() + durationInMs
-      req.session.currentExamId = examId
+      const durationInMs = exam[0].duration_minutes * 60 * 1000;
+      req.session.examEndTime = Date.now() + durationInMs;
+      req.session.currentExamId = examId;
+      
+      // NEW: Clear old shuffled questions when starting a NEW exam
+      req.session.shuffledQuestions = null; 
     }
 
-    // Calculate how many seconds are left
     const remainingSeconds = Math.max(
       0,
-      Math.floor((req.session.examEndTime - Date.now()) / 1000),
-    )
+      Math.floor((req.session.examEndTime - Date.now()) / 1000)
+    );
 
-    // 5. Render the page with the timer data
+    // 5. FETCH & SHUFFLE QUESTIONS
+    // We only fetch and shuffle IF it hasn't been done yet for this session/exam
+    if (!req.session.shuffledQuestions || req.session.currentExamId !== examId) {
+      const [questionsFromDb] = await db.query(
+        'SELECT * FROM questions WHERE exam_id = ? AND question_set = ?',
+        [examId, assignedSet]
+      );
+      
+      // Randomize the order and save to session
+      req.session.shuffledQuestions = shuffleArray([...questionsFromDb]);
+    }
+
+    // 6. Render the page
     res.render('student_exam_attempt', {
       user: req.session.user,
       exam: exam[0],
-      questions: questions,
+      questions: req.session.shuffledQuestions, // USE THE SHUFFLED ORDER FROM SESSION
       assignedSet: assignedSet,
-      remainingSeconds: remainingSeconds, // PASS THIS TO THE EJS
-    })
+      remainingSeconds: remainingSeconds,
+    });
+
   } catch (err) {
-    console.error('Exam Attempt Error:', err)
-    res.status(500).send('Error starting exam attempt: ' + err.message)
+    console.error('Exam Attempt Error:', err);
+    res.status(500).send('Error starting exam attempt: ' + err.message);
   }
-})
+});
 
 app.post('/student/exam/:examId/submit', async (req, res) => {
-  const examId = req.params.examId
-  const studentAnswers = req.body
-  const userId = req.session.user.user_id // Get the ID of the logged-in student
+  const examId = req.params.examId;
+  const studentAnswers = req.body;
+  const userId = req.session.user.user_id;
 
   try {
-    let assignedSet = 'A'
+    // 1. Identify which Set the student was assigned to
+    let assignedSet = 'A';
     const [assignedRow] = await db.query(
-      'SELECT question_set FROM exam_set_assignments WHERE user_id = ? AND exam_id = ? LIMIT 1',
-      [userId, examId],
-    )
+      'SELECT assigned_set FROM exam_set_assignments WHERE user_id = ? AND exam_id = ? LIMIT 1',
+      [userId, examId]
+    );
+    
     if (assignedRow.length > 0) {
-      assignedSet = assignedRow[0].question_set
+      assignedSet = assignedRow[0].assigned_set;
     }
 
+    // 2. Fetch the correct answers for THAT specific set
     const [questions] = await db.query(
       'SELECT question_id, correct_answer FROM questions WHERE exam_id = ? AND question_set = ?',
-      [examId, assignedSet],
-    )
-    const [exam] = await db.query('SELECT * FROM exams WHERE exam_id = ?', [
-      examId,
-    ])
+      [examId, assignedSet]
+    );
 
-    let score = 0
-    const totalQuestions = questions.length
+    const [exam] = await db.query('SELECT * FROM exams WHERE exam_id = ?', [examId]);
+
+    // 3. Calculate Score
+    let score = 0;
+    const totalQuestions = questions.length;
 
     questions.forEach((q) => {
-      const studentSelection = studentAnswers[`q${q.question_id}`]
+      // Inputs are usually named like 'q123' where 123 is the ID
+      const studentSelection = studentAnswers[`q${q.question_id}`];
       if (studentSelection === q.correct_answer) {
-        score++
+        score++;
       }
-    })
+    });
 
-    const status = score >= exam[0].pass_marks ? 'PASSED' : 'FAILED'
+    const status = score >= exam[0].pass_marks ? 'PASSED' : 'FAILED';
 
-    // NEW: Save the result to the database
-    if (hasResultsQuestionSetColumn) {
-      await db.query(
-        'INSERT INTO results (user_id, exam_id, score, total_questions, status, question_set) VALUES (?, ?, ?, ?, ?, ?)',
-        [userId, examId, score, totalQuestions, status, assignedSet],
-      )
-    } else {
-      await db.query(
-        'INSERT INTO results (user_id, exam_id, score, total_questions, status) VALUES (?, ?, ?, ?, ?)',
-        [userId, examId, score, totalQuestions, status],
-      )
-    }
+    // 4. Save result with Question Set (Crucial for Admin Analytics)
+    await db.query(
+      'INSERT INTO results (user_id, exam_id, score, total_questions, status, question_set) VALUES (?, ?, ?, ?, ?, ?)',
+      [userId, examId, score, totalQuestions, status, assignedSet]
+    );
 
-    delete req.session.examEndTime
-    delete req.session.currentExamId
+    // --- 5. SESSION CLEANUP (Anti-Cheat & Resource Management) ---
+    delete req.session.examEndTime;      // Reset the timer
+    delete req.session.currentExamId;    // Clear the active exam ID
+    delete req.session.shuffledQuestions; // Clear the random order we generated
+    // --------------------------------------------------------------
 
+    // 6. Final Render
     res.render('student_result', {
       user: req.session.user,
       exam: exam[0],
       score: score,
       total: totalQuestions,
       status: status,
-    })
-  } catch (err) {
-    console.error('Submission Error:', err)
-    res.status(500).send('Error saving exam result: ' + err.message)
-  }
-})
+      assignedSet: assignedSet
+    });
 
+  } catch (err) {
+    console.error('Submission Error:', err);
+    res.status(500).send('Error saving exam result: ' + err.message);
+  }
+});
 // Student Profile & Exam History
 // Student Profile & Exam History Route
 app.get('/student/history', async (req, res) => {
@@ -1135,24 +1208,26 @@ app.get('/student/exam/quit', (req, res) => {
 // --- NOTIFICATION MANAGEMENT ---
 // This route marks a notification as read and takes the admin to the student list
 app.get('/admin/notifications/read/:id', async (req, res) => {
-    // Security check
-    if (!req.session.user || !isAdmin(req.session.user.role)) {
-        return res.redirect('/login');
-    }
+  // Security check
+  if (!req.session.user || !isAdmin(req.session.user.role)) {
+    return res.redirect('/login')
+  }
 
-    try {
-        const noteId = req.params.id;
-        
-        // 1. Mark the notification as 'read' so it disappears from the dashboard
-        await db.query("UPDATE notifications SET is_read = 1 WHERE id = ?", [noteId]);
-        
-        // 2. Redirect to the students management page to assign the roll number
-        res.redirect('/admin/students');
-    } catch (err) {
-        console.error('Error clearing notification:', err);
-        res.status(500).send('Internal Server Error');
-    }
-});
+  try {
+    const noteId = req.params.id
+
+    // 1. Mark the notification as 'read' so it disappears from the dashboard
+    await db.query('UPDATE notifications SET is_read = 1 WHERE id = ?', [
+      noteId,
+    ])
+
+    // 2. Redirect to the students management page to assign the roll number
+    res.redirect('/admin/students')
+  } catch (err) {
+    console.error('Error clearing notification:', err)
+    res.status(500).send('Internal Server Error')
+  }
+})
 
 // 1. Show the list of students
 app.get('/admin/students', async (req, res) => {

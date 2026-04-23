@@ -1,299 +1,411 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <%- include('partials/head') %>
-    <title>Question Bank | Pariksha Admin</title>
-    <style>
-        .breadcrumb-item a { text-decoration: none; color: #64748b; }
-        
-        /* Updated gradient to use your Midnight Blue theme */
-        .bulk-upload-card { 
-            border-radius: 12px; 
-            border: none; 
-            background: linear-gradient(135deg, var(--primary-blue) 0%, #2a52be 100%); 
-        }
-        
-        .question-card { border-radius: 12px; transition: box-shadow 0.3s ease; }
-        .question-card:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important; }
-        .option-box { border: 1px solid #e2e8f0; border-radius: 8px; transition: all 0.2s ease; }
-        .option-correct { background-color: #f0fdf4; border-color: #22c55e; color: #15803d; font-weight: 600; }
-        .set-badge {
-            background-color: #e0e7ff;
-            color: #1E3A8A;
-            border: 1px solid #c7d2fe;
-            font-weight: 700;
-        }
-        
-    </style>
+        <title>Question Bank | Pariksha Admin</title>
+        <style>
+            .breadcrumb-item a {
+                text-decoration: none;
+                color: #64748b;
+            }
+
+            /* Updated gradient to use your Midnight Blue theme */
+            .bulk-upload-card {
+                border-radius: 12px;
+                border: none;
+                background: linear-gradient(135deg, var(--primary-blue) 0%, #2a52be 100%);
+            }
+
+            .question-card {
+                border-radius: 12px;
+                transition: box-shadow 0.3s ease;
+            }
+
+            .question-card:hover {
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+            }
+
+            .option-box {
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                transition: all 0.2s ease;
+            }
+
+            .option-correct {
+                background-color: #f0fdf4;
+                border-color: #22c55e;
+                color: #15803d;
+                font-weight: 600;
+            }
+
+            .set-badge {
+                background-color: #e0e7ff;
+                color: #1E3A8A;
+                border: 1px solid #c7d2fe;
+                font-weight: 700;
+            }
+        </style>
 </head>
+
 <body class="bg-light">
 
-<div class="container-fluid px-0">
-    <div class="row g-0">
-        <%- include('partials/sidebar', {currentPage: 'exams'}) %>
+    <div class="container-fluid px-0">
+        <div class="row g-0">
+            <%- include('partials/sidebar', {currentPage: 'exams' }) %>
 
-        <div class="col-12 col-md-10 offset-md-2 p-3 p-md-5">
-            
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb mb-1">
-                          <li class="breadcrumb-item"><a href="/admin/exams">Exams</a></li>
-                          <li class="breadcrumb-item active text-capitalize"><%= exam.exam_name %></li>
-                        </ol>
-                    </nav>
-                    <h2 class="fw-bold text-dark">Manage Questions</h2>
-                </div>
-                
-                <div class="d-flex gap-2">
-                    <% if (questions.length > 0) { %>
-                        <a href="/admin/questions/delete-all/<%= exam.exam_id %>" 
-                           class="btn btn-outline-danger rounded-pill px-3 shadow-sm" 
-                           onclick="return confirm('WARNING: This will permanently delete ALL questions for this exam. Continue?')">
-                            <i class="bi bi-trash3 me-2"></i>Clear Bank
-                        </a>
-                    <% } %>
-                    <button class="btn btn-primary rounded-pill shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
-                        <i class="bi bi-plus-lg me-2"></i>Add New MCQ
-                    </button>
-                </div>
-            </div>
+                <div class="col-12 col-md-10 offset-md-2 p-3 p-md-5">
 
-            <div class="card bulk-upload-card shadow-sm mb-4 text-white">
-                <div class="card-body p-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-7">
-                            <h5 class="fw-bold mb-1"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Bulk Import via CSV</h5>
-                            <p class="small mb-0 opacity-75">
-                                Quickly add multiple questions using a CSV file. 
-                                <a href="/templates/question_template.csv" class="text-white fw-bold text-decoration-underline ms-1" download>
-                                    <i class="bi bi-download me-1"></i>Download Template
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb mb-1">
+                                    <li class="breadcrumb-item"><a href="/admin/exams">Exams</a></li>
+                                    <li class="breadcrumb-item active text-capitalize">
+                                        <%= exam.exam_name %>
+                                    </li>
+                                </ol>
+                            </nav>
+                            <h2 class="fw-bold text-dark">Manage Questions</h2>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <% if (questions.length> 0) { %>
+                                <a href="/admin/questions/delete-all/<%= exam.exam_id %>"
+                                    class="btn btn-outline-danger rounded-pill px-3 shadow-sm"
+                                    onclick="return confirm('WARNING: This will permanently delete ALL questions for this exam. Continue?')">
+                                    <i class="bi bi-trash3 me-2"></i>Clear Bank
                                 </a>
-                            </p>
-                        </div>
-                        <div class="col-md-5 text-md-end mt-3 mt-md-0">
-                            <form action="/admin/exams/<%= exam.exam_id %>/questions/upload" method="POST" enctype="multipart/form-data" class="d-flex gap-2">
-                                <input type="file" name="csvFile" class="form-control form-control-sm border-0" accept=".csv" required>
-                                <button type="submit" class="btn btn-light btn-sm fw-bold px-4 rounded-pill text-dark">Upload</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <%
-                const setCountMap = questions.reduce((acc, q) => {
-                    const key = (q.question_set || 'A').toUpperCase();
-                    acc[key] = (acc[key] || 0) + 1;
-                    return acc;
-                }, {});
-                const setACount = setCountMap['A'] || 0;
-                const setBCount = setCountMap['B'] || 0;
-                const hasSetImbalance = setACount === 0 || setBCount === 0;
-            %>
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <div>
-                        <h6 class="fw-bold mb-1">Question Set Coverage</h6>
-                        <p class="text-muted small mb-0">Set A: <strong><%= setACount %></strong> &bull; Set B: <strong><%= setBCount %></strong></p>
-                    </div>
-                    <% if (hasSetImbalance) { %>
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                            One set is empty. Add questions to both sets for anti-cheat effectiveness.
-                        </span>
-                    <% } else { %>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
-                            <i class="bi bi-check-circle-fill me-1"></i>
-                            Balanced set coverage is available.
-                        </span>
-                    <% } %>
-                </div>
-            </div>
-
-            <div class="row">
-                <% if (questions.length === 0) { %>
-                    <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm">
-                        <i class="bi bi-folder2-open display-2 text-muted opacity-50"></i>
-                        <h5 class="mt-3 text-muted">No questions found</h5>
-                        <p class="text-muted small">Start by adding a single MCQ or uploading a CSV file.</p>
-                    </div>
-                <% } %>
-
-                <% questions.forEach((q, index) => { %>
-                    <div class="col-12 mb-3">
-                        <div class="card question-card p-4 shadow-sm border-0 bg-white">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div class="d-flex">
-                                    <span class="badge text-white me-3 d-flex align-items-center justify-content-center" style="background-color: var(--primary-blue); width: 35px; height: 35px; border-radius: 10px; font-size: 1rem;">
-                                        <%= index + 1 %>
-                                    </span>
-                                    <h5 class="fw-bold text-dark mb-0 mt-1"><%= q.question_text %></h5>
-                                </div>
-                                <div class="d-flex align-items-center gap-1">
-                                    <span class="badge set-badge rounded-pill px-3 me-2">Set <%= q.question_set || 'A' %></span>
-                                    <span class="badge bg-light text-dark border rounded-pill px-3 me-2">1 Mark</span>
-                                    
-                                    <button class="btn btn-sm btn-outline-primary border-0 rounded-circle" 
-                                            onclick="openEditQuestionModal(this)"
-                                            data-id="<%= q.question_id %>"
-                                            data-text="<%= q.question_text %>"
-                                            data-a="<%= q.option_a %>"
-                                            data-b="<%= q.option_b %>"
-                                            data-c="<%= q.option_c %>"
-                                            data-d="<%= q.option_d %>"
-                                            data-correct="<%= q.correct_answer %>"
-                                            data-set="<%= q.question_set || 'A' %>"
-                                            title="Edit">
-                                        <i class="bi bi-pencil-square"></i>
+                                <% } %>
+                                    <button class="btn btn-primary rounded-pill shadow-sm px-4" data-bs-toggle="modal"
+                                        data-bs-target="#addQuestionModal">
+                                        <i class="bi bi-plus-lg me-2"></i>Add New MCQ
                                     </button>
+                                    <button class="btn btn-outline-warning rounded-pill px-3 shadow-sm"
+                                        onclick="detectDuplicates()">
+                                        <i class="bi bi-search me-2"></i>Check Duplicates
+                                    </button>
+                        </div>
+                    </div>
 
-                                    <a href="/admin/questions/delete/<%= exam.exam_id %>/<%= q.question_id %>" 
-                                       class="btn btn-sm btn-outline-danger border-0 rounded-circle" 
-                                       onclick="return confirm('Delete this specific question?')"
-                                       title="Delete">
-                                        <i class="bi bi-trash-fill"></i>
-                                    </a>
+                    <div class="card bulk-upload-card shadow-sm mb-4 text-white">
+                        <div class="card-body p-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-7">
+                                    <h5 class="fw-bold mb-1"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Bulk
+                                        Import via CSV</h5>
+                                    <p class="small mb-0 opacity-75">
+                                        Quickly add multiple questions using a CSV file.
+                                        <a href="/templates/question_template.csv"
+                                            class="text-white fw-bold text-decoration-underline ms-1" download>
+                                            <i class="bi bi-download me-1"></i>Download Template
+                                        </a>
+                                    </p>
                                 </div>
-                            </div>
-                            
-                            <div class="row g-3">
-                                <% ['a', 'b', 'c', 'd'].forEach(opt => { 
-                                    let isCorrect = q.correct_answer === opt;
-                                %>
-                                    <div class="col-md-6">
-                                        <div class="p-3 option-box <%= isCorrect ? 'option-correct shadow-sm' : 'bg-light text-muted opacity-75' %> d-flex align-items-center">
-                                            <span class="me-2 fw-bold text-uppercase"><%= opt %>:</span>
-                                            <span><%= q['option_' + opt] %></span>
-                                            <% if (isCorrect) { %>
-                                                <i class="bi bi-check-circle-fill ms-auto text-success"></i>
-                                            <% } %>
-                                        </div>
-                                    </div>
-                                <% }) %>
+                                <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                                    <form action="/admin/exams/<%= exam.exam_id %>/questions/upload" method="POST" enctype="multipart/form-data" 
+      class="d-flex align-items-center justify-content-md-end gap-2 flex-nowrap">
+    
+    <select name="default_set" class="form-select form-select-sm border-0 rounded-pill px-3 shadow-sm" 
+            style="width: 160px; height: 38px; font-weight: 600; font-size: 0.8rem;">
+        <option value="A">Upload to Set A</option>
+        <option value="B">Upload to Set B</option>
+        <option value="OVERRIDE" selected>Use Set from CSV</option>
+    </select>
+    
+    <input type="file" name="csvFile" class="form-control form-control-sm border-0 rounded-pill px-3 shadow-sm" 
+           accept=".csv" required style="height: 38px; line-height: 28px; font-size: 0.8rem;">
+    
+    <button type="submit" class="btn btn-light btn-sm fw-bold px-4 rounded-pill text-dark shadow-sm d-flex align-items-center" 
+            style="height: 38px; white-space: nowrap;">
+        <i class="bi bi-cloud-upload me-2"></i>Upload
+    </button>
+</form> 
+                                </div>
                             </div>
                         </div>
                     </div>
-                <% }) %>
+
+                    <% const setCountMap=questions.reduce((acc, q)=> {
+                        const key = (q.question_set || 'A').toUpperCase();
+                        acc[key] = (acc[key] || 0) + 1;
+                        return acc;
+                        }, {});
+                        const setACount = setCountMap['A'] || 0;
+                        const setBCount = setCountMap['B'] || 0;
+                        const hasSetImbalance = setACount === 0 || setBCount === 0;
+                        %>
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div>
+                                    <h6 class="fw-bold mb-1">Question Set Coverage</h6>
+                                    <p class="text-muted small mb-0">Set A: <strong>
+                                            <%= setACount %>
+                                        </strong> &bull; Set B: <strong>
+                                            <%= setBCount %>
+                                        </strong></p>
+                                </div>
+                                <% if (hasSetImbalance) { %>
+                                    <span
+                                        class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                        One set is empty. Add questions to both sets for anti-cheat effectiveness.
+                                    </span>
+                                    <% } else { %>
+                                        <span
+                                            class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                                            <i class="bi bi-check-circle-fill me-1"></i>
+                                            Balanced set coverage is available.
+                                        </span>
+                                        <% } %>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <% if (questions.length===0) { %>
+                                <div class="col-12 text-center py-5 bg-white rounded-4 shadow-sm">
+                                    <i class="bi bi-folder2-open display-2 text-muted opacity-50"></i>
+                                    <h5 class="mt-3 text-muted">No questions found</h5>
+                                    <p class="text-muted small">Start by adding a single MCQ or uploading a CSV file.
+                                    </p>
+                                </div>
+                                <% } %>
+
+                                    <% questions.forEach((q, index)=> { %>
+                                        <div class="col-12 mb-3">
+                                            <div class="card question-card p-4 shadow-sm border-0 bg-white">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div class="d-flex">
+                                                        <span
+                                                            class="badge text-white me-3 d-flex align-items-center justify-content-center"
+                                                            style="background-color: var(--primary-blue); width: 35px; height: 35px; border-radius: 10px; font-size: 1rem;">
+                                                            <%= index + 1 %>
+                                                        </span>
+                                                        <h5 class="fw-bold text-dark mb-0 mt-1">
+                                                            <%= q.question_text %>
+                                                        </h5>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-1">
+                                                        <span class="badge set-badge rounded-pill px-3 me-2">Set <%=
+                                                                q.question_set || 'A' %></span>
+                                                        <span
+                                                            class="badge bg-light text-dark border rounded-pill px-3 me-2">1
+                                                            Mark</span>
+
+                                                        <button
+                                                            class="btn btn-sm btn-outline-primary border-0 rounded-circle"
+                                                            onclick="openEditQuestionModal(this)"
+                                                            data-id="<%= q.question_id %>"
+                                                            data-text="<%= q.question_text %>"
+                                                            data-a="<%= q.option_a %>" data-b="<%= q.option_b %>"
+                                                            data-c="<%= q.option_c %>" data-d="<%= q.option_d %>"
+                                                            data-correct="<%= q.correct_answer %>"
+                                                            data-set="<%= q.question_set || 'A' %>" title="Edit">
+                                                            <i class="bi bi-pencil-square"></i>
+                                                        </button>
+
+                                                        <a href="/admin/questions/delete/<%= exam.exam_id %>/<%= q.question_id %>"
+                                                            class="btn btn-sm btn-outline-danger border-0 rounded-circle"
+                                                            onclick="return confirm('Delete this specific question?')"
+                                                            title="Delete">
+                                                            <i class="bi bi-trash-fill"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row g-3">
+                                                    <% ['a', 'b' , 'c' , 'd' ].forEach(opt=> {
+                                                        let isCorrect = q.correct_answer === opt;
+                                                        %>
+                                                        <div class="col-md-6">
+                                                            <div
+                                                                class="p-3 option-box <%= isCorrect ? 'option-correct shadow-sm' : 'bg-light text-muted opacity-75' %> d-flex align-items-center">
+                                                                <span class="me-2 fw-bold text-uppercase">
+                                                                    <%= opt %>:
+                                                                </span>
+                                                                <span>
+                                                                    <%= q['option_' + opt] %>
+                                                                </span>
+                                                                <% if (isCorrect) { %>
+                                                                    <i
+                                                                        class="bi bi-check-circle-fill ms-auto text-success"></i>
+                                                                    <% } %>
+                                                            </div>
+                                                        </div>
+                                                        <% }) %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <% }) %>
+                        </div>
+                </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addQuestionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header text-white border-0" style="background-color: var(--primary-blue);">
+                    <h5 class="modal-title fw-bold">Create New MCQ</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/admin/exams/<%= exam.exam_id %>/questions/add" method="POST">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Question Description</label>
+                            <textarea name="question_text" class="form-control bg-light border-0 p-3" rows="3"
+                                placeholder="Type your question here..." required></textarea>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6"><label class="small fw-bold">Option A</label><input type="text"
+                                    name="option_a" class="form-control bg-light border-0 p-2" required></div>
+                            <div class="col-md-6"><label class="small fw-bold">Option B</label><input type="text"
+                                    name="option_b" class="form-control bg-light border-0 p-2" required></div>
+                            <div class="col-md-6"><label class="small fw-bold">Option C</label><input type="text"
+                                    name="option_c" class="form-control bg-light border-0 p-2" required></div>
+                            <div class="col-md-6"><label class="small fw-bold">Option D</label><input type="text"
+                                    name="option_d" class="form-control bg-light border-0 p-2" required></div>
+                        </div>
+                        <div class="mt-4 p-3 bg-success bg-opacity-10 rounded-3">
+                            <label class="form-label fw-bold text-success mb-2">Set Correct Answer</label>
+                            <select name="correct_answer" class="form-select border-success-subtle shadow-sm" required>
+                                <option value="a">Option A</option>
+                                <option value="b">Option B</option>
+                                <option value="c">Option C</option>
+                                <option value="d">Option D</option>
+                            </select>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label fw-bold mb-2">Question Set</label>
+                            <select name="question_set" class="form-select shadow-sm" required>
+                                <option value="A">Set A</option>
+                                <option value="B">Set B</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4">
+                        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm rounded-pill">Save
+                            Question</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-</div>
 
-<div class="modal fade" id="addQuestionModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header text-white border-0" style="background-color: var(--primary-blue);">
-                <h5 class="modal-title fw-bold">Create New MCQ</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <div class="modal fade" id="editQuestionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header text-white border-0" style="background-color: var(--primary-blue);">
+                    <h5 class="modal-title fw-bold">Edit Question</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editQuestionForm" method="POST">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Question Description</label>
+                            <textarea name="question_text" id="edit_q_text" class="form-control bg-light border-0 p-3"
+                                rows="3" required></textarea>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6"><label class="small fw-bold">Option A</label><input type="text"
+                                    name="option_a" id="edit_q_a" class="form-control bg-light border-0 p-2" required>
+                            </div>
+                            <div class="col-md-6"><label class="small fw-bold">Option B</label><input type="text"
+                                    name="option_b" id="edit_q_b" class="form-control bg-light border-0 p-2" required>
+                            </div>
+                            <div class="col-md-6"><label class="small fw-bold">Option C</label><input type="text"
+                                    name="option_c" id="edit_q_c" class="form-control bg-light border-0 p-2" required>
+                            </div>
+                            <div class="col-md-6"><label class="small fw-bold">Option D</label><input type="text"
+                                    name="option_d" id="edit_q_d" class="form-control bg-light border-0 p-2" required>
+                            </div>
+                        </div>
+                        <div class="mt-4 p-3 bg-success bg-opacity-10 rounded-3">
+                            <label class="form-label fw-bold text-success mb-2">Correct Answer</label>
+                            <select name="correct_answer" id="edit_q_correct"
+                                class="form-select border-success-subtle shadow-sm" required>
+                                <option value="a">Option A</option>
+                                <option value="b">Option B</option>
+                                <option value="c">Option C</option>
+                                <option value="d">Option D</option>
+                            </select>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label fw-bold mb-2">Question Set</label>
+                            <select name="question_set" id="edit_q_set" class="form-select shadow-sm" required>
+                                <option value="A">Set A</option>
+                                <option value="B">Set B</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 p-4">
+                        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm rounded-pill">Update
+                            Changes</button>
+                    </div>
+                </form>
             </div>
-            <form action="/admin/exams/<%= exam.exam_id %>/questions/add" method="POST">
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Question Description</label>
-                        <textarea name="question_text" class="form-control bg-light border-0 p-3" rows="3" placeholder="Type your question here..." required></textarea>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6"><label class="small fw-bold">Option A</label><input type="text" name="option_a" class="form-control bg-light border-0 p-2" required></div>
-                        <div class="col-md-6"><label class="small fw-bold">Option B</label><input type="text" name="option_b" class="form-control bg-light border-0 p-2" required></div>
-                        <div class="col-md-6"><label class="small fw-bold">Option C</label><input type="text" name="option_c" class="form-control bg-light border-0 p-2" required></div>
-                        <div class="col-md-6"><label class="small fw-bold">Option D</label><input type="text" name="option_d" class="form-control bg-light border-0 p-2" required></div>
-                    </div>
-                    <div class="mt-4 p-3 bg-success bg-opacity-10 rounded-3">
-                        <label class="form-label fw-bold text-success mb-2">Set Correct Answer</label>
-                        <select name="correct_answer" class="form-select border-success-subtle shadow-sm" required>
-                            <option value="a">Option A</option>
-                            <option value="b">Option B</option>
-                            <option value="c">Option C</option>
-                            <option value="d">Option D</option>
-                        </select>
-                    </div>
-                    <div class="mt-3">
-                        <label class="form-label fw-bold mb-2">Question Set</label>
-                        <select name="question_set" class="form-select shadow-sm" required>
-                            <option value="A">Set A</option>
-                            <option value="B">Set B</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 p-4">
-                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm rounded-pill">Save Question</button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
 
-<div class="modal fade" id="editQuestionModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header text-white border-0" style="background-color: var(--primary-blue);">
-                <h5 class="modal-title fw-bold">Edit Question</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editQuestionForm" method="POST">
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Question Description</label>
-                        <textarea name="question_text" id="edit_q_text" class="form-control bg-light border-0 p-3" rows="3" required></textarea>
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-6"><label class="small fw-bold">Option A</label><input type="text" name="option_a" id="edit_q_a" class="form-control bg-light border-0 p-2" required></div>
-                        <div class="col-md-6"><label class="small fw-bold">Option B</label><input type="text" name="option_b" id="edit_q_b" class="form-control bg-light border-0 p-2" required></div>
-                        <div class="col-md-6"><label class="small fw-bold">Option C</label><input type="text" name="option_c" id="edit_q_c" class="form-control bg-light border-0 p-2" required></div>
-                        <div class="col-md-6"><label class="small fw-bold">Option D</label><input type="text" name="option_d" id="edit_q_d" class="form-control bg-light border-0 p-2" required></div>
-                    </div>
-                    <div class="mt-4 p-3 bg-success bg-opacity-10 rounded-3">
-                        <label class="form-label fw-bold text-success mb-2">Correct Answer</label>
-                        <select name="correct_answer" id="edit_q_correct" class="form-select border-success-subtle shadow-sm" required>
-                            <option value="a">Option A</option>
-                            <option value="b">Option B</option>
-                            <option value="c">Option C</option>
-                            <option value="d">Option D</option>
-                        </select>
-                    </div>
-                    <div class="mt-3">
-                        <label class="form-label fw-bold mb-2">Question Set</label>
-                        <select name="question_set" id="edit_q_set" class="form-select shadow-sm" required>
-                            <option value="A">Set A</option>
-                            <option value="B">Set B</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 p-4">
-                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm rounded-pill">Update Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+    <script>
+        // Bulletproof script using HTML5 data attributes
+        function openEditQuestionModal(button) {
+            const id = button.getAttribute('data-id');
+            const text = button.getAttribute('data-text');
+            const a = button.getAttribute('data-a');
+            const b = button.getAttribute('data-b');
+            const c = button.getAttribute('data-c');
+            const d = button.getAttribute('data-d');
+            const correct = button.getAttribute('data-correct');
+            const questionSet = button.getAttribute('data-set') || 'A';
 
-<script>
-    // Bulletproof script using HTML5 data attributes
-    function openEditQuestionModal(button) {
-        const id = button.getAttribute('data-id');
-        const text = button.getAttribute('data-text');
-        const a = button.getAttribute('data-a');
-        const b = button.getAttribute('data-b');
-        const c = button.getAttribute('data-c');
-        const d = button.getAttribute('data-d');
-        const correct = button.getAttribute('data-correct');
-        const questionSet = button.getAttribute('data-set') || 'A';
+            document.getElementById('editQuestionForm').action = `/admin/questions/update/<%= exam.exam_id %>/${id}`;
+            document.getElementById('edit_q_text').value = text;
+            document.getElementById('edit_q_a').value = a;
+            document.getElementById('edit_q_b').value = b;
+            document.getElementById('edit_q_c').value = c;
+            document.getElementById('edit_q_d').value = d;
+            document.getElementById('edit_q_correct').value = correct;
+            document.getElementById('edit_q_set').value = questionSet;
 
-        document.getElementById('editQuestionForm').action = `/admin/questions/update/<%= exam.exam_id %>/${id}`;
-        document.getElementById('edit_q_text').value = text;
-        document.getElementById('edit_q_a').value = a;
-        document.getElementById('edit_q_b').value = b;
-        document.getElementById('edit_q_c').value = c;
-        document.getElementById('edit_q_d').value = d;
-        document.getElementById('edit_q_correct').value = correct;
-        document.getElementById('edit_q_set').value = questionSet;
+            new bootstrap.Modal(document.getElementById('editQuestionModal')).show();
+        }
+
+        // New: Duplicate Question Detector
+        async function detectDuplicates() {
+    const questionHeaders = document.querySelectorAll('.question-card h5');
+    const texts = Array.from(questionHeaders).map(h => h.innerText.trim().toLowerCase());
+    const duplicates = texts.filter((item, index) => texts.indexOf(item) !== index);
+
+    if (duplicates.length > 0) {
+        // Updated wording to "permanently remove"
+        const msg = `⚠️ Warning: Found ${duplicates.length} duplicate questions!\n\nWould you like to permanently remove these extra copies from the database? (This will keep only one unique version of each question).`;
         
-        new bootstrap.Modal(document.getElementById('editQuestionModal')).show();
+        if (confirm(msg)) {
+            try {
+                const examId = "<%= exam.exam_id %>"; 
+                const response = await fetch(`/api/admin/exams/${examId}/duplicates/cleanup`, { 
+                    method: 'POST' 
+                });
+
+                if (!response.ok) throw new Error("Server Error");
+
+                const result = await response.json();
+                alert(`✅ Success: ${result.deletedCount} duplicate questions were removed.`);
+                window.location.reload(); 
+            } catch (err) {
+                console.error("Cleanup Error:", err);
+                alert("Error: The delete command failed. Please check your internet connection or server logs.");
+            }
+        }
+    } else {
+        alert("✅ No duplicates found. Your question bank is clean.");
     }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+}
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
