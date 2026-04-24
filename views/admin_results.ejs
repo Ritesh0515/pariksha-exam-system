@@ -12,8 +12,6 @@
             color: #64748b;
             background-color: #f8fafc;
         }
-
-        /* Themed Avatar Circle */
         .avatar-circle {
             width: 42px;
             height: 42px;
@@ -26,21 +24,17 @@
             font-weight: 700;
             border: 1px solid #c7d2fe;
         }
-
         .drill-down-card {
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             border: 1px solid #e2e8f0;
             background: white;
         }
-
-        /* Themed Hover Effect */
         .drill-down-card:hover {
             transform: translateY(-5px);
             border-color: var(--primary-blue);
             box-shadow: 0 12px 20px -5px rgba(30, 58, 138, 0.15);
         }
-
         .analytics-card {
             border: 1px solid #e2e8f0;
             border-radius: 14px;
@@ -48,7 +42,6 @@
             padding: 1rem;
             height: 100%;
         }
-
         .analytics-label {
             font-size: 0.78rem;
             text-transform: uppercase;
@@ -56,445 +49,523 @@
             color: #64748b;
             font-weight: 700;
         }
-
         .analytics-value {
             font-size: 1.4rem;
             font-weight: 800;
             color: #0f172a;
             margin-top: 0.2rem;
         }
-
-        /* Themed Breadcrumbs */
         .breadcrumb-item a {
             color: var(--primary-blue);
             text-decoration: none;
             font-weight: 500;
         }
-
-        /* Print formatting */
         @media print {
-            .sidebar, .breadcrumb, button, .text-muted.mb-0 {
-                display: none !important;
-            }
-            .offset-md-2 {
-                margin-left: 0 !important;
-            }
-            .col-md-10 {
-                width: 100% !important;
-            }
+            .sidebar, .breadcrumb, button, .text-muted.mb-0 { display: none !important; }
+            .offset-md-2 { margin-left: 0 !important; }
+            .col-md-10 { width: 100% !important; }
             .card { border: none !important; box-shadow: none !important; }
         }
     </style>
 </head>
 
 <body class="bg-light">
-    <input type="hidden" id="rawResults" value='<%- JSON.stringify(results).replace(/'/g, "\\'") %>'>
-    <input type="hidden" id="rawCourses" value='<%- JSON.stringify(courses).replace(/'/g, "\\'") %>'>
+<div class="container-fluid px-0">
+    <div class="row g-0">
+        <%- include('partials/sidebar', {currentPage: 'results' }) %>
 
-    <div class="container-fluid px-0">
-        <div class="row g-0">
-            <%- include('partials/sidebar', {currentPage: 'results' }) %>
+        <div class="col-12 col-md-10 offset-md-2 p-3 p-md-5">
 
-            <div class="col-12 col-md-10 offset-md-2 p-3 p-md-5">
-                <div class="d-flex justify-content-between align-items-end mb-4">
-                    <div>
-                        <h2 class="fw-bold text-dark mb-1">Student Performance</h2>
-                        <p class="text-muted mb-0">Navigate through courses to view specific mark sheets.</p>
-                    </div>
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">Student Performance</h2>
+                    <p class="text-muted mb-0">Navigate through courses to view specific mark sheets.</p>
                 </div>
-
-                <nav aria-label="breadcrumb" class="mb-4">
-                    <ol class="breadcrumb bg-white p-3 rounded-4 shadow-sm border" id="resultsBreadcrumb">
-                        <li class="breadcrumb-item active" aria-current="page">Results</li>
-                    </ol>
-                </nav>
-
-                <div id="courseView" class="row g-4"></div>
-
-                <div id="yearView" class="d-none">
-                    <div class="text-center mb-5">
-                        <h4 class="fw-bold text-dark">Select Academic Year</h4>
-                        <button class="btn btn-sm btn-link text-muted" onclick="showCourseView()">
-                            <i class="bi bi-arrow-left"></i> Switch Course
-                        </button>
-                    </div>
-                    <div id="yearButtons" class="row g-3 justify-content-center"></div>
-                </div>
-
-                <div id="examView" class="d-none">
-                    <div class="text-center mb-5">
-                        <h4 class="fw-bold text-dark">Select Exam Paper</h4>
-                        <button class="btn btn-sm btn-link text-muted" onclick="showYearView()">
-                            <i class="bi bi-arrow-left"></i> Switch Year
-                        </button>
-                    </div>
-                    <div id="examList" class="row g-4 justify-content-center"></div>
-                </div>
-
-                <div id="resultView" class="d-none">
-                    <div class="card border-0 shadow-sm rounded-4 mb-4">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                                <h6 class="fw-bold mb-0">Assessment Analytics Overview</h6>
-                                <div class="d-flex align-items-center gap-2">
-                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="showExamView()">
-                                        <i class="bi bi-arrow-left me-1"></i> Back to Exams
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="exportSelectedResultsCSV()">
-                                        <i class="bi bi-download me-1"></i> Export CSV
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-3">
-                                    <div class="analytics-card">
-                                        <div class="analytics-label">Participation Rate</div>
-                                        <div class="analytics-value" id="participationValue">0%</div>
-                                        <div class="small text-muted" id="participationMeta">0 of 0 students attempted</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="analytics-card">
-                                        <div class="analytics-label">Average Score</div>
-                                        <div class="analytics-value" id="avgScoreValue">0%</div>
-                                        <div class="small text-muted">Mean performance of attempts</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="analytics-card">
-                                        <div class="analytics-label">Pass Ratio</div>
-                                        <div class="analytics-value text-success" id="passRatioValue">0%</div>
-                                        <div class="small text-muted" id="passRatioMeta">0 passed</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="analytics-card">
-                                        <div class="analytics-label">Set Mix (A / B)</div>
-                                        <div class="analytics-value" id="setMixValue">0 / 0</div>
-                                        <div class="small text-muted">Attempts by question set</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-2">
-                                <div class="d-flex justify-content-between small fw-semibold text-muted mb-1">
-                                    <span>Pass vs Fail</span>
-                                    <span id="passFailLabel">0% / 0%</span>
-                                </div>
-                                <div class="progress" style="height: 12px;">
-                                    <div id="passBar" class="progress-bar bg-success" style="width: 0%"></div>
-                                    <div id="failBar" class="progress-bar bg-danger" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card border-0 shadow-sm overflow-hidden rounded-4">
-                        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                            <h5 class="fw-bold mb-0" id="tableTitle">Students Marksheet</h5>
-                            <button class="btn btn-sm btn-primary rounded-pill px-3" style="background-color: var(--primary-blue);" onclick="window.print()">
-                                <i class="bi bi-printer me-1"></i> Print
-                            </button>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table mb-0 align-middle table-hover">
-                                <thead>
-                                    <tr>
-                                        <th class="ps-4 py-3 border-0">Student Details</th>
-                                        <th class="border-0 text-center">Marks Obtained</th>
-                                        <th class="border-0 text-center">Set</th>
-                                        <th class="border-0">Submission Time</th>
-                                        <th class="text-end pe-4 border-0">Result Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="resultTableBody" class="border-top-0"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
             </div>
-        </div>
-    </div>
 
-    <script>
-        // Data is now safely escaped above
-        const resultsData = JSON.parse(document.getElementById('rawResults').value || "[]");
-        const coursesData = JSON.parse(document.getElementById('rawCourses').value || "[]");
+            <%
+                /*
+                 * VARIABLE CONTRACT — server.js must pass ALL of these:
+                 *
+                 *   currentCourseId  {string|null}  raw DB id for ?courseId= hrefs  e.g. "3"
+                 *   currentCourse    {string|null}  display name for UI text         e.g. "B.Sc. CS"
+                 *   currentYear      {string|null}  "FY" / "SY" / "TY"
+                 *   exam             {object|null}  { exam_id, exam_name, … }
+                 *   results          {array}        LEFT JOIN rows (all enrolled)    or []
+                 *   exams            {array}        exam cards for State C           or []
+                 *   courses          {array}        course cards for State A         or []
+                 *
+                 * Back-compat:
+                 *   Older server.js versions passed:
+                 *     currentCourse = courseId (raw id)
+                 *     courseName    = course display name
+                 */
 
-        let selectedCourse = null;
-        let selectedYear = null;
-        let selectedExam = null;
-        let currentResultRows = [];
+                // Defensive locals so the template never hard-crashes if the
+                // server is still running an older render contract.
+                const legacyMaybeId =
+                  (typeof currentCourse !== 'undefined' && /^[0-9]+$/.test(String(currentCourse)))
+                    ? String(currentCourse)
+                    : null;
 
-        // Navigation Controllers
-        function updateBreadcrumb() {
-            const b = document.getElementById('resultsBreadcrumb');
-            // Hardcoded color var to ensure it matches theme
-            let h = `<li class="breadcrumb-item"><a href="#" onclick="showCourseView()" style="color: var(--primary-blue);">Results</a></li>`;
-            if (selectedCourse) h += `<li class="breadcrumb-item fw-medium" style="color: var(--primary-blue);">${selectedCourse}</li>`;
-            if (selectedYear) h += `<li class="breadcrumb-item fw-medium" style="color: var(--primary-blue);">${selectedYear}</li>`;
-            if (selectedExam) h += `<li class="breadcrumb-item active fw-bold">${selectedExam}</li>`;
-            b.innerHTML = h;
-        }
+                const courseIdForLinks =
+                  (typeof currentCourseId !== 'undefined' && currentCourseId !== null && currentCourseId !== '')
+                    ? String(currentCourseId)
+                    : legacyMaybeId;
 
-        function hideAll() {
-            ['courseView', 'yearView', 'examView', 'resultView'].forEach(id => {
-                document.getElementById(id).classList.add('d-none');
-            });
-        }
+                const courseNameForText =
+                  (typeof currentCourse !== 'undefined' && currentCourse && !/^[0-9]+$/.test(String(currentCourse)))
+                    ? String(currentCourse)
+                    : (typeof courseName !== 'undefined' ? String(courseName || '') : '');
+            %>
 
-        // STEP 1: RENDER COURSES
-        function showCourseView() {
-            hideAll();
-            document.getElementById('courseView').classList.remove('d-none');
-            renderCourseCards();
-            selectedCourse = null; selectedYear = null; selectedExam = null;
-            updateBreadcrumb();
-        }
+            <!-- ════════════════════════════════
+                 BREADCRUMBS
+                 • Display text  → currentCourse  (name)
+                 • href values   → currentCourseId (raw id)
+                 • State D fix   → condition is `exam && currentYear`
+                   (original was `exam && !currentYear` — always false in State D)
+            ════════════════════════════════ -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb bg-white p-3 rounded-4 shadow-sm border">
 
-      function renderCourseCards() {
-            const container = document.getElementById('courseView');
-            container.innerHTML = '';
-            coursesData.forEach(c => {
-                const col = document.createElement('div');
-                col.className = 'col-md-4';
-                col.innerHTML = `
-                    <div class="card drill-down-card border-0 shadow-sm rounded-4 p-4 text-center" onclick="selectCourse('${c.course_name}')">
-                        <div class="avatar-circle mx-auto mb-3" style="width: 60px; height: 60px;">
-                            <i class="bi bi-mortarboard fs-3"></i>
+                    <li class="breadcrumb-item">
+                        <a href="/admin/results">Results</a>
+                    </li>
+
+                    <% if (courseNameForText) { %>
+                        <li class="breadcrumb-item fw-medium">
+                            <% if (currentYear) { %>
+                                <a href="/admin/results?courseId=<%= encodeURIComponent(courseIdForLinks) %>">
+                                    <%= courseNameForText %>
+                                </a>
+                            <% } else { %>
+                                <%= courseNameForText %>
+                            <% } %>
+                        </li>
+                    <% } %>
+
+                    <% if (currentYear) { %>
+                        <li class="breadcrumb-item fw-medium">
+                            <% if (exam) { %>
+                                <a href="/admin/results?courseId=<%= encodeURIComponent(courseIdForLinks) %>&year=<%= currentYear %>">
+                                    <%= currentYear %>
+                                </a>
+                            <% } else { %>
+                                <%= currentYear %>
+                            <% } %>
+                        </li>
+                    <% } %>
+
+                    <% if (exam && currentYear) { %>
+                        <li class="breadcrumb-item active fw-bold" aria-current="page">
+                            <%= exam.exam_name %>
+                        </li>
+                    <% } %>
+
+                </ol>
+            </nav>
+
+
+            <!-- ════════════════════════════════
+                 STATE A — No course selected
+                 Show course cards.
+            ════════════════════════════════ -->
+            <% if (!courseNameForText) { %>
+                <div class="row g-4">
+                    <% if (courses && courses.length > 0) { %>
+                        <% courses.forEach(function(c) { %>
+                            <div class="col-md-4">
+                                <a href="/admin/results?courseId=<%= encodeURIComponent(c.course_id) %>"
+                                   class="text-decoration-none">
+                                    <div class="card drill-down-card border-0 shadow-sm rounded-4 p-4 text-center">
+                                        <div class="avatar-circle mx-auto mb-3"
+                                             style="width:60px;height:60px;">
+                                            <i class="bi bi-mortarboard fs-3"></i>
+                                        </div>
+                                        <h5 class="fw-bold mb-1 text-dark"><%= c.course_name %></h5>
+                                        <p class="text-muted small mb-0">View Academic Years</p>
+                                    </div>
+                                </a>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="col-12 text-center py-5">
+                            <i class="bi bi-folder-x display-4 text-muted opacity-50"></i>
+                            <p class="text-muted mt-3">No courses found.</p>
                         </div>
-                        <h5 class="fw-bold mb-1 text-dark">${c.course_name}</h5>
-                        <p class="text-muted small mb-0">View Academic Years</p>
-                    </div>`;
-                container.appendChild(col);
-            });
-        }
+                    <% } %>
+                </div>
+            <% } %>
 
-        // STEP 2: RENDER YEARS
-        function selectCourse(course) {
-            selectedCourse = course;
-            showYearView();
-        }
 
-        function showYearView() {
-            hideAll();
-            document.getElementById('yearView').classList.remove('d-none');
-            renderYearButtons();
-            selectedYear = null; selectedExam = null;
-            updateBreadcrumb();
-        }
-
-        function renderYearButtons() {
-            const years = ['FY', 'SY', 'TY'];
-            const container = document.getElementById('yearButtons');
-            container.innerHTML = '';
-            years.forEach(y => {
-                const col = document.createElement('div');
-                col.className = 'col-md-3';
-                // Added hover transition classes for polish
-                col.innerHTML = `<button class="btn btn-white border shadow-sm w-100 py-3 fw-bold rounded-4 transition" onclick="selectYear('${y}')">${y}</button>`;
-                container.appendChild(col);
-            });
-        }
-
-        // STEP 3: RENDER EXAMS
-        function selectYear(year) {
-            selectedYear = year;
-            showExamView();
-        }
-
-        function showExamView() {
-            hideAll();
-            document.getElementById('examView').classList.remove('d-none');
-            renderExamList();
-            selectedExam = null;
-            updateBreadcrumb();
-        }
-
-        function renderExamList() {
-            const exams = [...new Set(resultsData
-                .filter(r => r.class_name === selectedCourse && r.year_code === selectedYear)
-                .map(r => r.exam_name))];
-            
-            const container = document.getElementById('examList');
-            container.innerHTML = '';
-            
-            if (exams.length === 0) {
-                container.innerHTML = `
-                    <div class="col-12 text-center py-5">
-                        <i class="bi bi-folder-x display-4 text-muted opacity-50"></i>
-                        <p class="text-muted mt-3">No exam results found for ${selectedCourse} ${selectedYear}.</p>
-                    </div>`;
-                return;
-            }
-
-            exams.forEach(e => {
-                const col = document.createElement('div');
-                col.className = 'col-md-4';
-                const safeExam = e.replace(/'/g, "\\'");
-                col.innerHTML = `
-                    <div class="card drill-down-card border-0 shadow-sm rounded-4 p-4 d-flex flex-row align-items-center" onclick="selectExam('${safeExam}')">
-                        <div class="p-3 rounded-3 me-3 d-flex align-items-center justify-content-center" style="background-color: #E0E7FF; color: var(--primary-blue); width: 48px; height: 48px;">
-                            <i class="bi bi-file-earmark-text fs-5"></i>
+            <!-- ════════════════════════════════
+                 STATE B — Course selected, no Year
+                 Show FY / SY / TY buttons.
+                 FIX: hrefs pass currentCourseId (not the display name string).
+            ════════════════════════════════ -->
+            <% if (courseNameForText && !currentYear && !exam) { %>
+                <div class="text-center mb-5">
+                    <h4 class="fw-bold text-dark">Select Academic Year</h4>
+                    <a href="/admin/results" class="btn btn-sm btn-link text-muted">
+                        <i class="bi bi-arrow-left"></i> Switch Course
+                    </a>
+                </div>
+                <div class="row g-3 justify-content-center">
+                    <% ['FY','SY','TY'].forEach(function(y) { %>
+                        <div class="col-md-3">
+                            <a href="/admin/results?courseId=<%= encodeURIComponent(courseIdForLinks) %>&year=<%= y %>"
+                               class="btn btn-white border shadow-sm w-100 py-3 fw-bold rounded-4 text-dark text-decoration-none">
+                                <%= y %>
+                            </a>
                         </div>
-                        <h6 class="fw-bold mb-0 text-dark">${e}</h6>
-                    </div>`;
-                container.appendChild(col);
-            });
-        }
+                    <% }); %>
+                </div>
+            <% } %>
 
-        // STEP 4: RENDER FINAL TABLE
-        function selectExam(exam) {
-            selectedExam = exam;
-            showResultView();
-        }
 
-        function showResultView() {
-            hideAll();
-            document.getElementById('resultView').classList.remove('d-none');
-            renderResultTable();
-            updateBreadcrumb();
-        }
+            <!-- ════════════════════════════════
+                 STATE C — Course + Year, no Exam
+                 Show exam paper cards.
+                 FIX: all hrefs use currentCourseId.
+            ════════════════════════════════ -->
+            <% if (courseNameForText && currentYear && !exam) { %>
+                <div class="text-center mb-5">
+                    <h4 class="fw-bold text-dark">Select Exam Paper</h4>
+                    <a href="/admin/results?courseId=<%= encodeURIComponent(courseIdForLinks) %>"
+                       class="btn btn-sm btn-link text-muted">
+                        <i class="bi bi-arrow-left"></i> Switch Year
+                    </a>
+                </div>
+                <div class="row g-4 justify-content-center">
+                    <% if (exams && exams.length > 0) { %>
+                        <% exams.forEach(function(ex) { %>
+                            <div class="col-md-4">
+                                <a href="/admin/results?courseId=<%= encodeURIComponent(courseIdForLinks) %>&year=<%= currentYear %>&examId=<%= ex.exam_id %>"
+                                   class="text-decoration-none">
+                                    <div class="card drill-down-card border-0 shadow-sm rounded-4 p-4 d-flex flex-row align-items-center">
+                                        <div class="p-3 rounded-3 me-3 d-flex align-items-center justify-content-center"
+                                             style="background-color:#E0E7FF;color:var(--primary-blue);width:48px;height:48px;">
+                                            <i class="bi bi-file-earmark-text fs-5"></i>
+                                        </div>
+                                        <h6 class="fw-bold mb-0 text-dark"><%= ex.exam_name %></h6>
+                                    </div>
+                                </a>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="col-12 text-center py-5">
+                            <i class="bi bi-folder-x display-4 text-muted opacity-50"></i>
+                            <p class="text-muted mt-3">
+                                No exam papers found for
+                                <strong><%= courseNameForText %></strong> &mdash;
+                                <strong><%= currentYear %></strong>.
+                            </p>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
 
-        function renderResultTable() {
-            const rows = resultsData.filter(r => 
-                r.class_name === selectedCourse && 
-                r.year_code === selectedYear && 
-                r.exam_name === selectedExam
-            );
-            currentResultRows = rows;
-            const body = document.getElementById('resultTableBody');
-            body.innerHTML = '';
 
-            // Analytics calculation
-            const totalAttempts = rows.length;
-            const passedCount = rows.filter(r => r.status === 'PASSED').length;
-            const failedCount = totalAttempts - passedCount;
-            const passRatio = totalAttempts ? (passedCount / totalAttempts) * 100 : 0;
-            const failRatio = totalAttempts ? (failedCount / totalAttempts) * 100 : 0;
-            const avgScorePercent = totalAttempts
-                ? rows.reduce((sum, r) => sum + ((Number(r.score) / Math.max(1, Number(r.total_questions))) * 100), 0) / totalAttempts
-                : 0;
-            const setACount = rows.filter(r => (r.question_set || 'A') === 'A').length;
-            const setBCount = rows.filter(r => (r.question_set || 'A') === 'B').length;
-            const enrolledCount = new Set(
-                resultsData
-                    .filter(r => r.class_name === selectedCourse && r.year_code === selectedYear)
-                    .map(r => `${r.class_name}-${r.year_code}-${r.roll_no || r.user_id}`)
-            ).size;
-            const participationRate = enrolledCount ? (totalAttempts / enrolledCount) * 100 : 0;
+            <!-- ════════════════════════════════
+                 STATE D — Exam selected → Marksheet
+                 FIX analytics: filter to `attempted` rows before computing
+                   pass/fail/avg — null-status (not attempted) rows were
+                   previously inflating totalAttempts.
+                 FIX badge: explicit if/else instead of fragile .split('-')[1].
+                 FIX back link: uses currentCourseId.
+            ════════════════════════════════ -->
+            <% if (courseNameForText && currentYear && exam) { %>
 
-            document.getElementById('participationValue').innerText = `${participationRate.toFixed(1)}%`;
-            document.getElementById('participationMeta').innerText = `${totalAttempts} of ${enrolledCount || totalAttempts} students attempted`;
-            document.getElementById('avgScoreValue').innerText = `${avgScorePercent.toFixed(1)}%`;
-            document.getElementById('passRatioValue').innerText = `${passRatio.toFixed(1)}%`;
-            document.getElementById('passRatioMeta').innerText = `${passedCount} passed, ${failedCount} failed`;
-            document.getElementById('setMixValue').innerText = `${setACount} / ${setBCount}`;
-            document.getElementById('passFailLabel').innerText = `${passRatio.toFixed(1)}% / ${failRatio.toFixed(1)}%`;
-            document.getElementById('passBar').style.width = `${passRatio}%`;
-            document.getElementById('failBar').style.width = `${failRatio}%`;
+                <%
+                    const allRows       = results || [];
+                    const attempted     = allRows.filter(function(r){
+                        return r.status !== null && r.status !== undefined && r.status !== '';
+                    });
+                    const totalEnrolled = allRows.length;
+                    const totalAttempts = attempted.length;
+                    const notAttempted  = totalEnrolled - totalAttempts;
+                    const passedCount   = attempted.filter(function(r){ return r.status === 'PASSED'; }).length;
+                    const failedCount   = totalAttempts - passedCount;
+                    const passRatio     = totalAttempts ? (passedCount / totalAttempts) * 100 : 0;
+                    const failRatio     = totalAttempts ? (failedCount / totalAttempts) * 100 : 0;
+                    const avgScorePercent = totalAttempts
+                        ? attempted.reduce(function(sum, r){
+                            return sum + ((Number(r.marks_obtained || 0) / Math.max(1, Number(r.total_questions || 1))) * 100);
+                          }, 0) / totalAttempts
+                        : 0;
+                    const setACount = attempted.filter(function(r){ return (r.question_set || 'A') === 'A'; }).length;
+                    const setBCount = attempted.filter(function(r){ return (r.question_set || 'A') === 'B'; }).length;
+                %>
 
-            fetch(`/api/admin/results-analytics?class_name=${encodeURIComponent(selectedCourse)}&year_code=${encodeURIComponent(selectedYear)}&exam_name=${encodeURIComponent(selectedExam)}`)
-                .then(response => response.ok ? response.json() : null)
-                .then(apiStats => {
-                    if (!apiStats) return;
-                    document.getElementById('avgScoreValue').innerText = `${Number(apiStats.averageScorePercent || 0).toFixed(1)}%`;
-                })
-                .catch(() => {});
-            
-            rows.forEach(r => {
-                const badgeClass = r.status === 'PASSED' ? 'bg-success' : 'bg-danger';
-                const subDate = new Date(r.submitted_at);
-                
-                body.innerHTML += `
-                    <tr>
-                        <td class="ps-4">
-                            <div class="d-flex align-items-center">
-                                <div class="avatar-circle me-3">${r.first_name.charAt(0)}${r.last_name.charAt(0)}</div>
-                                <div>
-                                    <div class="fw-bold text-dark">${r.first_name} ${r.last_name}</div>
-                                    <div class="small text-muted">Roll No: ${r.roll_no || 'N/A'}</div>
+                <!-- Analytics Overview -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                            <h6 class="fw-bold mb-0">Assessment Analytics Overview</h6>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="/admin/results?courseId=<%= encodeURIComponent(courseIdForLinks) %>&year=<%= currentYear %>"
+                                   class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                    <i class="bi bi-arrow-left me-1"></i> Back to Exams
+                                </a>
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                        onclick="exportCSV()">
+                                    <i class="bi bi-download me-1"></i> Export CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <div class="analytics-card">
+                                    <div class="analytics-label">Total Enrolled</div>
+                                    <div class="analytics-value"><%= totalEnrolled %></div>
+                                    <div class="small text-muted">
+                                        <%= totalAttempts %> attempted,
+                                        <span class="text-warning fw-semibold"><%= notAttempted %> pending</span>
+                                    </div>
                                 </div>
                             </div>
-                        </td>
-                        <td class="text-center">
-                            <div class="fs-5 fw-bold text-dark">${r.score} <span class="text-muted fw-normal small">/ ${r.total_questions}</span></div>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2">
-                                Set ${r.question_set || 'A'}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="small fw-medium">${subDate.toLocaleDateString()}</div>
-                            <div class="text-muted small">${subDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                        </td>
-                        <td class="text-end pe-4">
-                            <span class="badge ${badgeClass} bg-opacity-10 text-${badgeClass.split('-')[1]} border rounded-pill px-3 py-2">
-                                ${r.status}
-                            </span>
-                        </td>
-                    </tr>`;
+                            <div class="col-md-3">
+                                <div class="analytics-card">
+                                    <div class="analytics-label">Average Score</div>
+                                    <div class="analytics-value"><%= avgScorePercent.toFixed(1) %>%</div>
+                                    <div class="small text-muted">Among attempted students</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="analytics-card">
+                                    <div class="analytics-label">Pass Ratio</div>
+                                    <div class="analytics-value text-success"><%= passRatio.toFixed(1) %>%</div>
+                                    <div class="small text-muted">
+                                        <%= passedCount %> passed, <%= failedCount %> failed
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="analytics-card">
+                                    <div class="analytics-label">Set Mix (A / B)</div>
+                                    <div class="analytics-value"><%= setACount %> / <%= setBCount %></div>
+                                    <div class="small text-muted">Attempts by question set</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between small fw-semibold text-muted mb-1">
+                                <span>Pass vs Fail</span>
+                                <span><%= passRatio.toFixed(1) %>% / <%= failRatio.toFixed(1) %>%</span>
+                            </div>
+                            <div class="progress" style="height:12px;">
+                                <div class="progress-bar bg-success js-bar" data-width="<%= passRatio %>"></div>
+                                <div class="progress-bar bg-danger js-bar"  data-width="<%= failRatio %>"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Marksheet Table -->
+                <div class="card border-0 shadow-sm overflow-hidden rounded-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <h5 class="fw-bold mb-0">
+                                Students Marksheet &mdash; <%= exam.exam_name %>
+                            </h5>
+
+                            <div class="d-flex align-items-center flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="small text-muted fw-semibold">Show:</span>
+                                    <select id="statusFilter" class="form-select form-select-sm rounded-pill" style="width:auto;">
+                                        <option value="ALL">All attempts</option>
+                                        <option value="PASSED">Passed</option>
+                                        <option value="FAILED">Failed</option>
+                                    </select>
+                                </div>
+
+                                <span id="visibleCount" class="small text-muted"></span>
+
+                                <button class="btn btn-sm btn-primary rounded-pill px-3"
+                                        style="background-color:var(--primary-blue);"
+                                        onclick="window.print()">
+                                    <i class="bi bi-printer me-1"></i> Print
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table mb-0 align-middle table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4 py-3 border-0">Student Details</th>
+                                    <th class="border-0 text-center">Marks Obtained</th>
+                                    <th class="border-0 text-center">Set</th>
+                                    <th class="border-0">Submission Time</th>
+                                    <th class="text-end pe-4 border-0">Result Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="border-top-0">
+                                <% if (attempted.length > 0) { %>
+                                    <% attempted.forEach(function(student) { %>
+                                        <%
+                                            const subDate    = student.submitted_at ? new Date(student.submitted_at) : null;
+                                        %>
+                                        <tr data-status="<%= student.status %>">
+                                            <td class="ps-4">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-circle me-3">
+                                                        <%= student.first_name ? student.first_name.charAt(0).toUpperCase() : '' %><%= student.last_name ? student.last_name.charAt(0).toUpperCase() : '' %>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold text-dark">
+                                                            <%= student.first_name %> <%= student.last_name %>
+                                                        </div>
+                                                        <div class="small text-muted">
+                                                            Roll No: <%= student.roll_no || 'N/A' %>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <div class="fs-5 fw-bold text-dark">
+                                                    <%= student.marks_obtained || 0 %>
+                                                    <span class="text-muted fw-normal small">
+                                                        / <%= student.total_questions || 0 %>
+                                                    </span>
+                                                </div>
+                                            </td>
+
+                                            <td class="text-center">
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2">
+                                                    Set <%= student.question_set || 'A' %>
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <% if (subDate) { %>
+                                                    <div class="small fw-medium">
+                                                        <%= subDate.toLocaleDateString() %>
+                                                    </div>
+                                                    <div class="text-muted small">
+                                                        <%= subDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) %>
+                                                    </div>
+                                                <% } else { %>
+                                                    <div class="text-muted small">Not submitted</div>
+                                                <% } %>
+                                            </td>
+
+                                            <td class="text-end pe-4">
+                                                <% if (student.status === 'PASSED') { %>
+                                                    <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2">
+                                                        PASSED
+                                                    </span>
+                                                <% } else if (student.status === 'FAILED') { %>
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-3 py-2">
+                                                        FAILED
+                                                    </span>
+                                                <% } else { %>
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border rounded-pill px-3 py-2">
+                                                        <%= student.status %>
+                                                    </span>
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            No attempts found for this exam.
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            <% } %> <%# end State D %>
+
+        </div><%# /.col %>
+    </div><%# /.row %>
+</div><%# /.container-fluid %>
+
+
+<script id="resultsData" type="application/json"><%- JSON.stringify(results || []) %></script>
+
+<script>
+    // Set progress bar widths from data-width attributes.
+    document.querySelectorAll('.js-bar[data-width]').forEach((el) => {
+        const w = Number(el.getAttribute('data-width') || 0);
+        el.style.width = `${Math.max(0, Math.min(100, w))}%`;
+    });
+
+    // Filter attempted results by status (All / Passed / Failed)
+    (function initStatusFilter(){
+        const select = document.getElementById('statusFilter');
+        const countEl = document.getElementById('visibleCount');
+        const rows = Array.from(document.querySelectorAll('tbody tr[data-status]'));
+
+        function apply(){
+            const val = (select?.value || 'ALL').toUpperCase();
+            let shown = 0;
+            rows.forEach((tr) => {
+                const st = String(tr.getAttribute('data-status') || '').toUpperCase();
+                const visible = (val === 'ALL') ? true : st === val;
+                tr.style.display = visible ? '' : 'none';
+                if (visible) shown++;
             });
-        }
-
-        function exportSelectedResultsCSV() {
-            if (!currentResultRows || currentResultRows.length === 0) {
-                alert('No result data available to export for this exam.');
-                return;
+            if (countEl) {
+                countEl.textContent = `${shown} / ${rows.length} attempts shown`;
             }
-
-            const headers = [
-                'First Name',
-                'Last Name',
-                'Roll No',
-                'Course',
-                'Year',
-                'Exam',
-                'Question Set',
-                'Score',
-                'Total Questions',
-                'Status',
-                'Submitted At'
-            ];
-
-            const escapeCSV = (value) => {
-                const safe = String(value ?? '');
-                if (safe.includes(',') || safe.includes('"') || safe.includes('\n')) {
-                    return `"${safe.replace(/"/g, '""')}"`;
-                }
-                return safe;
-            };
-
-            const lines = [
-                headers.join(','),
-                ...currentResultRows.map(r => ([
-                    r.first_name,
-                    r.last_name,
-                    r.roll_no || 'N/A',
-                    r.class_name,
-                    r.year_code,
-                    r.exam_name,
-                    r.question_set || 'A',
-                    r.score,
-                    r.total_questions,
-                    r.status,
-                    r.submitted_at
-                ].map(escapeCSV).join(',')))
-            ];
-
-            const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${selectedCourse || 'course'}-${selectedYear || 'year'}-${selectedExam || 'exam'}-results.csv`.replace(/\s+/g, '_');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
         }
 
-        showCourseView();
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        if (select) select.addEventListener('change', apply);
+        apply();
+    })();
+
+    function exportCSV() {
+        const rows = JSON.parse(document.getElementById('resultsData')?.textContent || '[]');
+        if (!rows || rows.length === 0) {
+            alert('No student data available to export for this exam.');
+            return;
+        }
+        const headers = [
+            'First Name','Last Name','Roll No',
+            'Question Set','Marks Obtained','Total Questions',
+            'Status','Submitted At'
+        ];
+        const escapeCSV = v => {
+            const s = String(v ?? '');
+            return (s.includes(',') || s.includes('"') || s.includes('\n'))
+                ? `"${s.replace(/"/g,'""')}"` : s;
+        };
+        const lines = [
+            headers.join(','),
+            ...rows.map(r => [
+                r.first_name,
+                r.last_name,
+                r.roll_no         || 'N/A',
+                r.question_set    || 'A',
+                r.marks_obtained  || '',
+                r.total_questions || '',
+                r.status          || 'NOT ATTEMPTED',
+                r.submitted_at    || ''
+            ].map(escapeCSV).join(','))
+        ];
+        const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = '<%= (currentCourse||"course")+"-"+(currentYear||"year")+"-"+(exam?exam.exam_name:"exam") %>'
+                        .replace(/\s+/g,'_') + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
